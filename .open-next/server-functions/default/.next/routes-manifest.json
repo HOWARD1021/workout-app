@@ -64,6 +64,12 @@
       "regex": "^/log(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/log(?:/)?$"
+    },
+    {
+      "page": "/templates",
+      "regex": "^/templates(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/templates(?:/)?$"
     }
   ],
   "dataRoutes": [],
