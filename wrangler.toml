@@ -1,0 +1,16 @@
+#:schema node_modules/wrangler/config-schema.json
+
+name = "workout-app"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+main = ".open-next/worker.js"
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "workout-db"
+database_id = "94c0f610-8616-4105-9d25-93ffcdb13d3c"
