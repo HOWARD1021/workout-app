@@ -1,8 +1,17 @@
-import { Suspense } from "react";
-import WorkoutLogger from "@/components/WorkoutLogger";
+"use client";
+
+import { Suspense, useState } from "react";
+import WorkoutLogger, { WorkoutSummary } from "@/components/WorkoutLogger";
+import WorkoutComplete from "@/components/WorkoutComplete";
 
 function LogPageContent() {
-  return <WorkoutLogger />;
+  const [completedSummary, setCompletedSummary] = useState<WorkoutSummary | null>(null);
+
+  if (completedSummary) {
+    return <WorkoutComplete summary={completedSummary} />;
+  }
+
+  return <WorkoutLogger onFinish={setCompletedSummary} />;
 }
 
 export default function LogPage() {

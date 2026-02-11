@@ -1,0 +1,75 @@
+{
+  "common": {
+    "back": "返回",
+    "finish": "完成",
+    "cancel": "取消",
+    "save": "儲存",
+    "delete": "刪除",
+    "edit": "編輯",
+    "add": "新增",
+    "loading": "載入中...",
+    "search": "搜尋"
+  },
+  "home": {
+    "title": "Workout",
+    "startWorkout": "開始訓練",
+    "exerciseLibrary": "動作庫",
+    "templates": "模板",
+    "statistics": "統計",
+    "workouts": "訓練",
+    "totalKg": "總容量 kg",
+    "progress": "進度"
+  },
+  "workout": {
+    "freeWorkout": "自由訓練",
+    "defaultRestTime": "預設休息時間",
+    "restTime": "休息時間",
+    "set": "組",
+    "previous": "上次",
+    "kg": "kg",
+    "reps": "次數",
+    "addSet": "新增組數",
+    "addExercise": "新增動作",
+    "selectExercise": "選擇動作",
+    "searchExercises": "搜尋動作...",
+    "enterWeightAndReps": "請先輸入重量和次數！"
+  },
+  "complete": {
+    "great": "你很棒！💪",
+    "awesome": "太厲害了！🔥",
+    "keepGoing": "繼續保持！🌟",
+    "fitnessPro": "健身達人！🏆",
+    "amazing": "超級棒！✨",
+    "workoutComplete": "訓練完成！",
+    "exercises": "動作",
+    "totalVolume": "總容量 kg",
+    "duration": "時長",
+    "todayBest": "今日最佳",
+    "backHome": "返回首頁",
+    "viewStats": "查看統計"
+  },
+  "templates": {
+    "title": "訓練模板",
+    "create": "建立模板",
+    "selectTemplate": "選擇模板",
+    "startEmpty": "空白訓練",
+    "recentlyUsed": "最近使用",
+    "noTemplates": "還沒有模板"
+  },
+  "exercises": {
+    "title": "動作庫",
+    "noExercises": "還沒有動作"
+  },
+  "analytics": {
+    "title": "訓練統計",
+    "totalWorkouts": "總訓練次數",
+    "totalVolume": "總訓練量",
+    "streak": "連續天數"
+  },
+  "reminder": {
+    "title": "該運動了！",
+    "message": "已經 {days} 天沒有訓練了",
+    "startNow": "開始訓練",
+    "later": "稍後提醒"
+  }
+}

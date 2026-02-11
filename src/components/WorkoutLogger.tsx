@@ -13,7 +13,26 @@ import {
   ArrowLeft,
   Timer,
   X,
+  Trash2,
+  GripVertical,
 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   Dialog,
   DialogContent,
@@ -38,8 +57,179 @@ interface SetLog {
 }
 
 interface ExerciseBlock {
+  id: string; // Unique ID for drag-and-drop
   exercise: Exercise;
   sets: SetLog[];
+}
+
+// Sortable Exercise Card Component
+function SortableExerciseCard({
+  block,
+  blockIndex,
+  getPrevious,
+  updateSet,
+  toggleSetComplete,
+  deleteSet,
+  addSet,
+}: {
+  block: ExerciseBlock;
+  blockIndex: number;
+  getPrevious: (exerciseId: string) => string;
+  updateSet: (blockIndex: number, setIndex: number, field: "weight" | "reps", value: string) => void;
+  toggleSetComplete: (blockIndex: number, setIndex: number) => void;
+  deleteSet: (blockIndex: number, setIndex: number) => void;
+  addSet: (blockIndex: number) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: block.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className={`bg-white border-2 border-[#E5E5E5] mb-4 ${isDragging ? "shadow-lg" : ""}`}
+    >
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-[#3C3C3C]">
+          <button
+            {...attributes}
+            {...listeners}
+            className="touch-none cursor-grab active:cursor-grabbing p-1 -ml-1 hover:bg-gray-100 rounded"
+          >
+            <GripVertical className="h-5 w-5 text-[#AFAFAF]" />
+          </button>
+          <Dumbbell className="h-5 w-5" />
+          {block.exercise.name}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* Table Header */}
+        <div className="grid grid-cols-[40px_1fr_80px_80px_50px] gap-2 mb-2 text-sm text-[#AFAFAF] font-medium">
+          <div>Set</div>
+          <div>Previous</div>
+          <div className="text-center">kg</div>
+          <div className="text-center">Reps</div>
+          <div className="text-center">
+            <Check className="h-4 w-4 mx-auto" />
+          </div>
+        </div>
+
+        {/* Sets */}
+        {block.sets.map((set, setIndex) => (
+          <div
+            key={setIndex}
+            className={`group relative grid grid-cols-[40px_1fr_80px_80px_50px] gap-2 mb-2 items-center transition-all duration-200 ${
+              set.completed
+                ? "bg-[#C8F7C5] rounded-lg p-2 -mx-1 border-2 border-[#58CC02]"
+                : ""
+            }`}
+          >
+            {/* Delete button - appears on hover/touch */}
+            {block.sets.length > 1 && !set.completed && (
+              <button
+                onClick={() => deleteSet(blockIndex, setIndex)}
+                className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-red-100 text-red-500 hover:bg-red-200"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+            <div
+              className={`font-bold ${
+                set.completed ? "text-[#58CC02]" : "text-[#3C3C3C]"
+              }`}
+            >
+              {set.set_order}
+            </div>
+            <div
+              className={`text-sm ${
+                set.completed
+                  ? "text-[#58CC02] line-through"
+                  : "text-[#AFAFAF]"
+              }`}
+            >
+              {getPrevious(block.exercise.id)}
+            </div>
+            <Input
+              type="number"
+              placeholder="0"
+              value={set.weight ?? ""}
+              onChange={(e) =>
+                updateSet(blockIndex, setIndex, "weight", e.target.value)
+              }
+              onFocus={(e) => e.target.select()}
+              className={`h-10 text-center border-2 ${
+                set.completed
+                  ? "border-[#58CC02] bg-white text-[#58CC02] font-bold"
+                  : "border-[#E5E5E5] focus:border-[#58CC02]"
+              }`}
+              disabled={set.completed}
+            />
+            <Input
+              type="number"
+              placeholder="0"
+              value={set.reps ?? ""}
+              onChange={(e) =>
+                updateSet(blockIndex, setIndex, "reps", e.target.value)
+              }
+              onFocus={(e) => e.target.select()}
+              className={`h-10 text-center border-2 ${
+                set.completed
+                  ? "border-[#58CC02] bg-white text-[#58CC02] font-bold"
+                  : "border-[#E5E5E5] focus:border-[#58CC02]"
+              }`}
+              disabled={set.completed}
+            />
+            <Button
+              variant={set.completed ? "default" : "outline"}
+              size="icon"
+              className={
+                set.completed
+                  ? "bg-[#58CC02] hover:bg-[#46A302] text-white shadow-md"
+                  : "border-2 border-[#E5E5E5] text-[#AFAFAF] hover:border-[#58CC02] hover:text-[#58CC02]"
+              }
+              onClick={() => toggleSetComplete(blockIndex, setIndex)}
+            >
+              <Check className="h-5 w-5" />
+            </Button>
+          </div>
+        ))}
+
+        {/* Rest Timer Placeholder */}
+        <div className="flex justify-center my-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-2 border-[#E5E5E5] text-[#AFAFAF]"
+          >
+            <Clock className="h-4 w-4 mr-1" />
+            1:00
+          </Button>
+        </div>
+
+        {/* Add Set Button */}
+        <Button
+          variant="outline"
+          className="w-full border-2 border-[#58CC02] text-[#58CC02] hover:bg-[#E8F5E9]"
+          onClick={() => addSet(blockIndex)}
+        >
+          <Plus className="h-4 w-4 mr-1" />
+          Add Set
+        </Button>
+      </CardContent>
+    </Card>
+  );
 }
 
 export interface WorkoutSummary {
@@ -72,12 +262,25 @@ export default function WorkoutLogger({
   const [searchQuery, setSearchQuery] = useState("");
   const [templateLoaded, setTemplateLoaded] = useState(false);
 
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   // Rest timer state
   const [restTimer, setRestTimer] = useState<number | null>(null);
   const [isRestTimerRunning, setIsRestTimerRunning] = useState(false);
   const restTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [defaultRestTime, setDefaultRestTime] = useState(90); // Default 90 seconds
   const REST_TIME_OPTIONS = [30, 60, 90, 120, 180]; // Available rest time options
+  const [isRestTimerExpanded, setIsRestTimerExpanded] = useState(true); // For floating timer
 
   // Track exercise IDs for fetching previous data
   const exerciseIds = useMemo(
@@ -99,7 +302,8 @@ export default function WorkoutLogger({
   // Load exercises from template
   useEffect(() => {
     if (templateId && templateExercises.length > 0 && !templateLoaded) {
-      const blocks: ExerciseBlock[] = templateExercises.map((te) => ({
+      const blocks: ExerciseBlock[] = templateExercises.map((te, index) => ({
+        id: `block-${te.exercise?.id || index}-${Date.now()}`,
         exercise: {
           id: te.exercise?.id || "",
           name: te.exercise?.name || "",
@@ -173,6 +377,7 @@ export default function WorkoutLogger({
     setExerciseBlocks((prev) => [
       ...prev,
       {
+        id: `block-${exercise.id}-${Date.now()}`,
         exercise,
         sets: [{ set_order: 1, weight: null, reps: null, completed: false }],
       },
@@ -185,11 +390,29 @@ export default function WorkoutLogger({
     setExerciseBlocks((prev) => {
       const updated = [...prev];
       const block = updated[blockIndex];
+      // Get the last completed set's values to pre-fill
+      const lastCompletedSet = [...block.sets].reverse().find(s => s.completed);
       block.sets.push({
         set_order: block.sets.length + 1,
-        weight: null,
-        reps: null,
+        weight: lastCompletedSet?.weight ?? null,
+        reps: lastCompletedSet?.reps ?? null,
         completed: false,
+      });
+      return updated;
+    });
+  };
+
+  const deleteSet = (blockIndex: number, setIndex: number) => {
+    setExerciseBlocks((prev) => {
+      const updated = [...prev];
+      const block = updated[blockIndex];
+      // Don't allow deleting if only one set remains
+      if (block.sets.length <= 1) return prev;
+      
+      block.sets.splice(setIndex, 1);
+      // Re-number the sets
+      block.sets.forEach((s, i) => {
+        s.set_order = i + 1;
       });
       return updated;
     });
@@ -244,8 +467,60 @@ export default function WorkoutLogger({
     // Start rest timer when completing a set (not when uncompleting)
     if (!set.completed) {
       startRestTimer(defaultRestTime);
+      
+      // Auto-fill next uncompleted set with same weight/reps
+      const nextSetIndex = setIndex + 1;
+      if (nextSetIndex < block.sets.length) {
+        const nextSet = block.sets[nextSetIndex];
+        if (!nextSet.completed) {
+          setExerciseBlocks((prev) => {
+            const newBlocks = [...prev];
+            const targetBlock = newBlocks[blockIndex];
+            if (targetBlock.sets[nextSetIndex]) {
+              targetBlock.sets[nextSetIndex] = {
+                ...targetBlock.sets[nextSetIndex],
+                weight: set.weight,
+                reps: set.reps,
+              };
+            }
+            return newBlocks;
+          });
+        }
+      }
     }
   };
+
+  // Play notification sound using Web Audio API
+  const playRestEndSound = useCallback(() => {
+    try {
+      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      
+      // Play 3 short beeps
+      const playBeep = (time: number) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 880; // A5 note
+        oscillator.type = "sine";
+        
+        gainNode.gain.setValueAtTime(0.3, time);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
+        
+        oscillator.start(time);
+        oscillator.stop(time + 0.15);
+      };
+      
+      const now = audioContext.currentTime;
+      playBeep(now);
+      playBeep(now + 0.2);
+      playBeep(now + 0.4);
+    } catch (error) {
+      console.error("Failed to play sound:", error);
+    }
+  }, []);
 
   // Rest timer functions
   const startRestTimer = (seconds: number) => {
@@ -254,12 +529,14 @@ export default function WorkoutLogger({
     }
     setRestTimer(seconds);
     setIsRestTimerRunning(true);
+    setIsRestTimerExpanded(true);
 
     restTimerRef.current = setInterval(() => {
       setRestTimer((prev) => {
         if (prev === null || prev <= 1) {
           clearInterval(restTimerRef.current!);
           setIsRestTimerRunning(false);
+          playRestEndSound(); // Play sound when rest ends
           return null;
         }
         return prev - 1;
@@ -356,6 +633,19 @@ export default function WorkoutLogger({
     }
   };
 
+  // Handle drag end for reordering exercise blocks
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setExerciseBlocks((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
   const filteredExercises = exercises.filter(
     (e) =>
       e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -428,43 +718,6 @@ export default function WorkoutLogger({
           </CardContent>
         </Card>
 
-        {/* Rest Timer */}
-        {isRestTimerRunning && restTimer !== null && (
-          <Card className="bg-[#1CB0F6] border-0 mb-4 text-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Timer className="h-6 w-6" />
-                  <div>
-                    <p className="text-sm opacity-80">休息時間</p>
-                    <p className="text-3xl font-bold font-mono">
-                      {Math.floor(restTimer / 60)}:{(restTimer % 60).toString().padStart(2, "0")}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-white hover:bg-white/20"
-                    onClick={() => addRestTime(30)}
-                  >
-                    +30s
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-white hover:bg-white/20"
-                    onClick={stopRestTimer}
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Rest Time Settings */}
         <Card className="bg-white border-2 border-[#E5E5E5] mb-4">
           <CardContent className="p-3">
@@ -494,123 +747,30 @@ export default function WorkoutLogger({
           </CardContent>
         </Card>
 
-        {/* Exercise Blocks */}
-        {exerciseBlocks.map((block, blockIndex) => (
-          <Card
-            key={blockIndex}
-            className="bg-white border-2 border-[#E5E5E5] mb-4"
+        {/* Exercise Blocks with Drag and Drop */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={exerciseBlocks.map((b) => b.id)}
+            strategy={verticalListSortingStrategy}
           >
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-[#3C3C3C]">
-                <Dumbbell className="h-5 w-5" />
-                {block.exercise.name}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {/* Table Header */}
-              <div className="grid grid-cols-[40px_1fr_80px_80px_50px] gap-2 mb-2 text-sm text-[#AFAFAF] font-medium">
-                <div>Set</div>
-                <div>Previous</div>
-                <div className="text-center">kg</div>
-                <div className="text-center">Reps</div>
-                <div className="text-center">
-                  <Check className="h-4 w-4 mx-auto" />
-                </div>
-              </div>
-
-              {/* Sets */}
-              {block.sets.map((set, setIndex) => (
-                <div
-                  key={setIndex}
-                  className={`grid grid-cols-[40px_1fr_80px_80px_50px] gap-2 mb-2 items-center transition-all duration-200 ${
-                    set.completed
-                      ? "bg-[#C8F7C5] rounded-lg p-2 -mx-1 border-2 border-[#58CC02]"
-                      : ""
-                  }`}
-                >
-                  <div
-                    className={`font-bold ${
-                      set.completed ? "text-[#58CC02]" : "text-[#3C3C3C]"
-                    }`}
-                  >
-                    {set.set_order}
-                  </div>
-                  <div
-                    className={`text-sm ${
-                      set.completed
-                        ? "text-[#58CC02] line-through"
-                        : "text-[#AFAFAF]"
-                    }`}
-                  >
-                    {getPrevious(block.exercise.id)}
-                  </div>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={set.weight ?? ""}
-                    onChange={(e) =>
-                      updateSet(blockIndex, setIndex, "weight", e.target.value)
-                    }
-                    className={`h-10 text-center border-2 ${
-                      set.completed
-                        ? "border-[#58CC02] bg-white text-[#58CC02] font-bold"
-                        : "border-[#E5E5E5] focus:border-[#58CC02]"
-                    }`}
-                    disabled={set.completed}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={set.reps ?? ""}
-                    onChange={(e) =>
-                      updateSet(blockIndex, setIndex, "reps", e.target.value)
-                    }
-                    className={`h-10 text-center border-2 ${
-                      set.completed
-                        ? "border-[#58CC02] bg-white text-[#58CC02] font-bold"
-                        : "border-[#E5E5E5] focus:border-[#58CC02]"
-                    }`}
-                    disabled={set.completed}
-                  />
-                  <Button
-                    variant={set.completed ? "default" : "outline"}
-                    size="icon"
-                    className={
-                      set.completed
-                        ? "bg-[#58CC02] hover:bg-[#46A302] text-white shadow-md"
-                        : "border-2 border-[#E5E5E5] text-[#AFAFAF] hover:border-[#58CC02] hover:text-[#58CC02]"
-                    }
-                    onClick={() => toggleSetComplete(blockIndex, setIndex)}
-                  >
-                    <Check className="h-5 w-5" />
-                  </Button>
-                </div>
-              ))}
-
-              {/* Rest Timer Placeholder */}
-              <div className="flex justify-center my-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-2 border-[#E5E5E5] text-[#AFAFAF]"
-                >
-                  <Clock className="h-4 w-4 mr-1" />
-                  1:00
-                </Button>
-              </div>
-
-              {/* Add Set Button */}
-              <Button
-                variant="outline"
-                className="w-full border-2 border-[#58CC02] text-[#58CC02] hover:bg-[#E8F5E9]"
-                onClick={() => addSet(blockIndex)}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Add Set
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+            {exerciseBlocks.map((block, blockIndex) => (
+              <SortableExerciseCard
+                key={block.id}
+                block={block}
+                blockIndex={blockIndex}
+                getPrevious={getPrevious}
+                updateSet={updateSet}
+                toggleSetComplete={toggleSetComplete}
+                deleteSet={deleteSet}
+                addSet={addSet}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
 
         {/* Add Exercise Button */}
         <Button
@@ -621,6 +781,65 @@ export default function WorkoutLogger({
           Add Exercise
         </Button>
       </div>
+
+      {/* Floating Rest Timer */}
+      {isRestTimerRunning && restTimer !== null && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          {isRestTimerExpanded ? (
+            // Expanded view
+            <div className="bg-[#1CB0F6] text-white rounded-2xl shadow-lg px-5 py-4 min-w-[280px]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Timer className="h-6 w-6" />
+                  <div>
+                    <p className="text-sm opacity-80">休息時間</p>
+                    <p className="text-3xl font-bold font-mono">
+                      {Math.floor(restTimer / 60)}:{(restTimer % 60).toString().padStart(2, "0")}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-white hover:bg-white/20 px-2"
+                    onClick={() => addRestTime(30)}
+                  >
+                    +30s
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-white/20 h-8 w-8"
+                    onClick={() => setIsRestTimerExpanded(false)}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-white/20 h-8 w-8"
+                    onClick={stopRestTimer}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            // Minimized view - small pill
+            <button
+              onClick={() => setIsRestTimerExpanded(true)}
+              className="bg-[#1CB0F6] text-white rounded-full shadow-lg px-4 py-2 flex items-center gap-2 hover:bg-[#0A9AD6] transition-colors"
+            >
+              <Timer className="h-5 w-5" />
+              <span className="font-bold font-mono text-lg">
+                {Math.floor(restTimer / 60)}:{(restTimer % 60).toString().padStart(2, "0")}
+              </span>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Exercise Picker Dialog */}
       <Dialog open={showExercisePicker} onOpenChange={setShowExercisePicker}>

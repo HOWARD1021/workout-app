@@ -1,14 +1,14 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
   "/api/exercises/route": "app/api/exercises/route.js",
-  "/api/exercises/previous/route": "app/api/exercises/previous/route.js",
-  "/api/templates/[id]/route": "app/api/templates/[id]/route.js",
   "/api/templates/route": "app/api/templates/route.js",
+  "/api/templates/[id]/route": "app/api/templates/[id]/route.js",
+  "/api/exercises/previous/route": "app/api/exercises/previous/route.js",
   "/api/workouts/route": "app/api/workouts/route.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/analytics/page": "app/analytics/page.js",
-  "/log/page": "app/log/page.js",
   "/page": "app/page.js",
+  "/log/page": "app/log/page.js",
   "/templates/page": "app/templates/page.js",
   "/exercises/page": "app/exercises/page.js"
 }

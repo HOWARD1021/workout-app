@@ -1,0 +1,75 @@
+{
+  "common": {
+    "back": "Back",
+    "finish": "Finish",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "loading": "Loading...",
+    "search": "Search"
+  },
+  "home": {
+    "title": "Workout",
+    "startWorkout": "Start Workout",
+    "exerciseLibrary": "Exercise Library",
+    "templates": "Templates",
+    "statistics": "Statistics",
+    "workouts": "Workouts",
+    "totalKg": "Total kg",
+    "progress": "Progress"
+  },
+  "workout": {
+    "freeWorkout": "Free Workout",
+    "defaultRestTime": "Default Rest Time",
+    "restTime": "Rest Time",
+    "set": "Set",
+    "previous": "Previous",
+    "kg": "kg",
+    "reps": "Reps",
+    "addSet": "Add Set",
+    "addExercise": "Add Exercise",
+    "selectExercise": "Select Exercise",
+    "searchExercises": "Search exercises...",
+    "enterWeightAndReps": "Please enter weight and reps first!"
+  },
+  "complete": {
+    "great": "Great job! 💪",
+    "awesome": "Awesome! 🔥",
+    "keepGoing": "Keep it up! 🌟",
+    "fitnessPro": "Fitness Pro! 🏆",
+    "amazing": "Amazing! ✨",
+    "workoutComplete": "Workout Complete!",
+    "exercises": "Exercises",
+    "totalVolume": "Total Volume",
+    "duration": "Duration",
+    "todayBest": "Today's Best",
+    "backHome": "Back to Home",
+    "viewStats": "View Statistics"
+  },
+  "templates": {
+    "title": "Workout Templates",
+    "create": "Create Template",
+    "selectTemplate": "Select Template",
+    "startEmpty": "Empty Workout",
+    "recentlyUsed": "Recently Used",
+    "noTemplates": "No templates yet"
+  },
+  "exercises": {
+    "title": "Exercise Library",
+    "noExercises": "No exercises yet"
+  },
+  "analytics": {
+    "title": "Workout Statistics",
+    "totalWorkouts": "Total Workouts",
+    "totalVolume": "Total Volume",
+    "streak": "Streak"
+  },
+  "reminder": {
+    "title": "Time to workout!",
+    "message": "It's been {days} days since your last workout",
+    "startNow": "Start Workout",
+    "later": "Remind Later"
+  }
+}

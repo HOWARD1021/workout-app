@@ -1,14 +1,14 @@
 {
   "/_not-found/page": "/_not-found",
   "/api/exercises/route": "/api/exercises",
-  "/api/exercises/previous/route": "/api/exercises/previous",
-  "/api/templates/[id]/route": "/api/templates/[id]",
   "/api/templates/route": "/api/templates",
+  "/api/templates/[id]/route": "/api/templates/[id]",
+  "/api/exercises/previous/route": "/api/exercises/previous",
   "/api/workouts/route": "/api/workouts",
   "/favicon.ico/route": "/favicon.ico",
   "/analytics/page": "/analytics",
-  "/log/page": "/log",
   "/page": "/",
+  "/log/page": "/log",
   "/templates/page": "/templates",
   "/exercises/page": "/exercises"
 }

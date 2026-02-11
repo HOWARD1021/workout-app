@@ -1,0 +1,16 @@
+name: Reset Local Database
+description: Reset and re-seed the local D1 database
+author: Warp Agent
+
+steps:
+  - name: Remove local D1 state
+    command: rm -rf .wrangler/state
+    
+  - name: Create schema
+    command: wrangler d1 execute workout-db --local --file=./drizzle/migrations/0000_nosy_giant_girl.sql
+    
+  - name: Seed exercises
+    command: wrangler d1 execute workout-db --local --command="$(cat ./drizzle/seed.sql)"
+    
+  - name: Seed templates
+    command: wrangler d1 execute workout-db --local --command="$(cat ./drizzle/0002_seed_templates.sql)"

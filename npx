@@ -1,0 +1,17 @@
+
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+
+ ⛅️ wrangler 4.32.0 (update available 4.64.0)
+─────────────────────────────────────────────
+Using vars defined in .dev.vars
+Your Worker has access to the following bindings:
+Binding                             Resource                  Mode
+env.DB (workout-db)                 D1 Database               local
+env.STATIC_ASSETS                   Assets                    local
+env.NEXTJS_ENV ("(hidden)")         Environment Variable      local
+
+
+[32mIf you think this is a bug then please create an issue at https://github.com/cloudflare/workers-sdk/issues/new/choose[0m
+Note that there is a newer version of Wrangler available (4.64.0). Consider checking whether upgrading resolves this error.
+? Would you like to report this error to Cloudflare? Wrangler's output and the error details will be shared with the Wrangler team to help us diagnose and fix the issue.
+🤖 Using fallback value in non-interactive context: no

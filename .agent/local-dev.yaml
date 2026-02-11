@@ -1,0 +1,10 @@
+name: Start Local Development
+description: Build and start the workout app locally with Cloudflare D1
+author: Warp Agent
+
+steps:
+  - name: Kill existing processes on port 8788
+    command: lsof -ti :8788 | xargs kill -9 2>/dev/null || true
+    
+  - name: Build and start local server
+    command: npm run local
