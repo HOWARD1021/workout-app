@@ -3,15 +3,9 @@
 name = "workout-app"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
-main = ".open-next/worker.js"
 
 # Cloudflare Pages build output directory
 pages_build_output_dir = ".open-next"
-
-# Assets configuration
-[assets]
-directory = ".open-next/assets"
-binding = "STATIC_ASSETS"
 
 # D1 Database binding
 [[d1_databases]]
