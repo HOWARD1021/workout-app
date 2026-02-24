@@ -1,0 +1,10 @@
+# Runtime env for Wrangler local development
+NEXTJS_ENV=local
+
+# Better Auth
+BETTER_AUTH_SECRET=change-me-to-a-random-secret
+BETTER_AUTH_URL=http://localhost:8788
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret

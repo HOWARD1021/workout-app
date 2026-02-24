@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "@/lib/auth-client";
-import GoogleLoginButton from "./GoogleLoginButton";
+import GoogleSignInButton from "./GoogleSignInButton";
 import UserMenu from "./UserMenu";
 
 export default function AuthStatus() {
@@ -12,7 +12,7 @@ export default function AuthStatus() {
   }
 
   if (!session) {
-    return <GoogleLoginButton />;
+    return <GoogleSignInButton />;
   }
 
   return <UserMenu />;

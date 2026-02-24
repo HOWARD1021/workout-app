@@ -1,7 +1,7 @@
 # Better Auth 會員系統實作規格
 
 ## 概述
-在 Workout App 整合 Better Auth 實現使用者認證功能，支援 Email/Password 和 OAuth 登入。
+在 Workout App 整合 Better Auth 實現使用者認證功能，只支援 Google OAuth 登入。
 
 ## 技術選型
 - **Auth Library**: [Better Auth](https://better-auth.com/)
@@ -55,17 +55,6 @@ CREATE TABLE accounts (
 );
 ```
 
-#### 4. verification_tokens (Email 驗證)
-```sql
-CREATE TABLE verification_tokens (
-  id TEXT PRIMARY KEY,
-  identifier TEXT NOT NULL,
-  token TEXT UNIQUE NOT NULL,
-  expires_at TEXT NOT NULL,
-  created_at TEXT DEFAULT (datetime('now'))
-);
-```
-
 ### 修改現有資料表
 
 需要在以下資料表加入 `user_id` 欄位：
@@ -94,8 +83,7 @@ src/
 │               └── route.ts       # Auth API routes
 ├── components/
 │   ├── AuthButton.tsx             # 登入/登出按鈕
-│   ├── LoginForm.tsx              # 登入表單
-│   ├── RegisterForm.tsx           # 註冊表單
+│   ├── GoogleSignInButton.tsx     # Google 登入按鈕
 │   └── UserMenu.tsx               # 使用者選單
 └── middleware.ts                   # 路由保護
 ```
@@ -103,21 +91,11 @@ src/
 ## API Routes
 
 ### Better Auth 處理的路由
-- `POST /api/auth/sign-up` - 註冊
-- `POST /api/auth/sign-in/email` - Email 登入
 - `POST /api/auth/sign-in/social` - OAuth 登入
 - `POST /api/auth/sign-out` - 登出
 - `GET /api/auth/session` - 取得 session
-- `POST /api/auth/forgot-password` - 忘記密碼
-- `POST /api/auth/reset-password` - 重設密碼
 
 ## 認證流程
-
-### Email/Password 登入
-1. 使用者填寫 email 和 password
-2. 呼叫 `/api/auth/sign-in/email`
-3. Better Auth 驗證並建立 session
-4. 返回 session token，存入 cookie
 
 ### OAuth 登入 (Google)
 1. 使用者點擊 "使用 Google 登入"
@@ -136,10 +114,10 @@ interface AuthButtonProps {
 }
 ```
 
-### LoginForm
+### GoogleSignInButton
 ```tsx
-// Email/Password 登入表單
-interface LoginFormProps {
+// Google OAuth 登入按鈕
+interface GoogleSignInButtonProps {
   onSuccess?: () => void;
   redirectTo?: string;
 }
@@ -175,10 +153,61 @@ interface UserMenuProps {
 BETTER_AUTH_SECRET=your-secret-key
 BETTER_AUTH_URL=http://localhost:3000
 
-# OAuth (可選)
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
+# OAuth (Google)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 ```
+
+## Google OAuth 必要設定
+
+### 1. Google Cloud Console
+1. 建立 OAuth 2.0 Client (Web application)
+2. Authorized JavaScript origins 加入：
+   - `http://localhost:3000` (本機)
+   - `https://<your-production-domain>` (正式環境)
+3. Authorized redirect URIs 加入：
+   - `http://localhost:3000/api/auth/callback/google`
+   - `https://<your-production-domain>/api/auth/callback/google`
+4. 將 Client ID / Secret 寫入 `GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`
+
+### 2. Better Auth 伺服器設定 (`src/lib/auth.ts`)
+```ts
+import { betterAuth } from "better-auth";
+
+export const auth = betterAuth({
+  secret: process.env.BETTER_AUTH_SECRET!,
+  baseURL: process.env.BETTER_AUTH_URL!,
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    },
+  },
+});
+```
+
+### 3. API Route (`src/app/api/auth/[...all]/route.ts`)
+```ts
+import { toNextJsHandler } from "better-auth/next-js";
+import { auth } from "@/lib/auth";
+
+export const { GET, POST } = toNextJsHandler(auth);
+```
+
+### 4. 前端 Google 登入按鈕
+```tsx
+import { authClient } from "@/lib/auth-client";
+
+await authClient.signIn.social({
+  provider: "google",
+  callbackURL: "/",
+});
+```
+
+### 5. 重要注意
+- `BETTER_AUTH_URL` 必須和實際站點網址一致，否則 callback 會失敗
+- 本機與正式環境都要在 Google Console 加上對應 callback URL
+- 若有 `middleware` 保護首頁，`callbackURL` 請改成可公開訪問的頁面
 
 ## 實作步驟
 
@@ -189,11 +218,10 @@ GOOGLE_CLIENT_SECRET=
 4. [ ] 新增 Drizzle migration 建立 users/sessions/accounts 表
 
 ### Phase 2: UI 元件
-1. [ ] 建立 LoginForm 元件
-2. [ ] 建立 RegisterForm 元件
-3. [ ] 建立 AuthButton 元件
-4. [ ] 建立 UserMenu 元件
-5. [ ] 更新首頁加入登入入口
+1. [ ] 建立 GoogleSignInButton 元件
+2. [ ] 建立 AuthButton 元件
+3. [ ] 建立 UserMenu 元件
+4. [ ] 更新首頁加入登入入口
 
 ### Phase 3: 路由保護
 1. [ ] 建立 middleware.ts
@@ -206,9 +234,13 @@ GOOGLE_CLIENT_SECRET=
 3. [ ] 修改 exercises 加入 user_id
 4. [ ] 更新所有 API 根據 user_id 過濾資料
 
-### Phase 5: OAuth (可選)
-1. [ ] 設定 Google OAuth
-2. [ ] 加入 "使用 Google 登入" 按鈕
+### Phase 5: OAuth (Google Only)
+1. [ ] 在 Google Cloud Console 建立 OAuth client
+2. [ ] 設定 redirect URI: `/api/auth/callback/google`
+3. [ ] 寫入 `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
+4. [ ] 在 `auth.ts` 啟用 `socialProviders.google`
+5. [ ] 加入 "使用 Google 登入" 按鈕
+6. [ ] 驗證 callback 後可成功建立 session
 
 ## 注意事項
 
@@ -219,8 +251,8 @@ GOOGLE_CLIENT_SECRET=
 
 ## 測試檢查項目
 
-- [ ] 註冊新帳號成功
-- [ ] Email/Password 登入成功
+- [ ] Google 登入成功（首次登入自動建立帳號）
+- [ ] Google 登入成功（已存在帳號可正常登入）
 - [ ] 登出成功
 - [ ] 未登入時訪問受保護路由會重導向
 - [ ] 登入後只能看到自己的資料

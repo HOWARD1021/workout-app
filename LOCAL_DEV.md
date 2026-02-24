@@ -23,15 +23,36 @@ npm run local
 
 ### 初始化本地資料庫（首次設定）
 ```bash
-# 1. 建立 schema
+# 1. 建立 app schema
 wrangler d1 execute workout-db --local --file=./drizzle/migrations/0000_nosy_giant_girl.sql
 
-# 2. Seed exercises（固定 ID）
-wrangler d1 execute workout-db --local --command="$(cat ./drizzle/seed.sql)"
+# 2. 建立 Better Auth schema
+wrangler d1 execute workout-db --local --file=./drizzle/migrations/0001_supreme_the_renegades.sql
 
-# 3. Seed templates
-wrangler d1 execute workout-db --local --command="$(cat ./drizzle/0002_seed_templates.sql)"
+# 3. Seed exercises（固定 ID）
+wrangler d1 execute workout-db --local --file=./drizzle/seed.sql
+
+# 4. Seed templates
+wrangler d1 execute workout-db --local --file=./drizzle/0002_seed_templates.sql
 ```
+
+或直接執行：
+```bash
+npm run db:local:setup
+```
+
+### Google OAuth 本機環境變數
+請建立 `.dev.vars`（可由 `.dev.vars.example` 複製）並填入：
+```env
+NEXTJS_ENV=local
+BETTER_AUTH_SECRET=your-secret-key
+BETTER_AUTH_URL=http://localhost:8788
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+```
+
+Google Cloud Console 的 Authorized redirect URI 請加入：
+- `http://localhost:8788/api/auth/callback/google`
 
 ### 重置本地資料庫
 ```bash

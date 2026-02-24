@@ -11,6 +11,9 @@ export function getAuth() {
     database: drizzleAdapter(db, {
       provider: "sqlite",
     }),
+    emailAndPassword: {
+      enabled: false,
+    },
     socialProviders: {
       google: {
         clientId: env.GOOGLE_CLIENT_ID,

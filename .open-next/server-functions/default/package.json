@@ -13,7 +13,7 @@
     "deploy:cf": "npx wrangler deploy",
     "deploy": "npm run build:cf && npx wrangler pages deploy .open-next --project-name=workout-app",
     "db:generate": "drizzle-kit generate",
-    "db:local:setup": "wrangler d1 execute workout-db --local --file=./drizzle/migrations/0000_nosy_giant_girl.sql && wrangler d1 execute workout-db --local --file=./drizzle/seed.sql",
+    "db:local:setup": "wrangler d1 execute workout-db --local --file=./drizzle/migrations/0000_nosy_giant_girl.sql && wrangler d1 execute workout-db --local --file=./drizzle/migrations/0001_supreme_the_renegades.sql && wrangler d1 execute workout-db --local --file=./drizzle/seed.sql && wrangler d1 execute workout-db --local --file=./drizzle/0002_seed_templates.sql",
     "db:migrate": "tsx scripts/migrate-from-supabase.ts",
     "db:push:local": "wrangler d1 execute workout-db --local --file",
     "db:push:remote": "wrangler d1 execute workout-db --remote --file"

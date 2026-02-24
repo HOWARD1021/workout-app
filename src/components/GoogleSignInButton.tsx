@@ -1,13 +1,14 @@
 "use client";
 
-import { signIn } from "@/lib/auth-client";
+import { signInWithGoogle } from "@/lib/auth-client";
 
-export default function GoogleLoginButton() {
+interface GoogleSignInButtonProps {
+  callbackURL?: string;
+}
+
+export default function GoogleSignInButton({ callbackURL = "/" }: GoogleSignInButtonProps) {
   const handleLogin = async () => {
-    await signIn.social({
-      provider: "google",
-      callbackURL: "/",
-    });
+    await signInWithGoogle(callbackURL);
   };
 
   return (
@@ -33,7 +34,7 @@ export default function GoogleLoginButton() {
           fill="#EA4335"
         />
       </svg>
-      Google 登入
+      使用 Google 登入
     </button>
   );
 }
