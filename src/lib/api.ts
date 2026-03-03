@@ -146,3 +146,24 @@ export interface TemplateExercise {
     muscleGroup: string | null;
   } | null;
 }
+
+// Exercise Image Generation
+export interface ExerciseImageResult {
+  exerciseName: string;
+  muscleGroup: string | null;
+  type: "demo" | "anatomy";
+  mimeType: string;
+  base64: string;
+}
+
+export const exerciseImageApi = {
+  generate: (data: {
+    exerciseName: string;
+    muscleGroup?: string | null;
+    type?: "demo" | "anatomy";
+  }) =>
+    fetchApi<ExerciseImageResult>("/generate-exercise-image", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};

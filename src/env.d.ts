@@ -7,6 +7,9 @@ declare global {
     BETTER_AUTH_URL: string;
     GOOGLE_CLIENT_ID: string;
     GOOGLE_CLIENT_SECRET: string;
+    IMAGE_API_BASE?: string;
+    IMAGE_API_KEY?: string;
+    IMAGE_MODEL?: string;
   }
 }
 

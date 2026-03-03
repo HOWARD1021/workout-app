@@ -3,6 +3,7 @@
 import WorkoutDashboard from "@/components/WorkoutDashboard";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import UserMenu from "@/components/UserMenu";
+import DuckMascot from "@/components/DuckMascot";
 import { useSession } from "@/lib/auth-client";
 
 export default function Home() {
@@ -18,12 +19,26 @@ export default function Home() {
 
   if (!session) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center gap-4 bg-white px-6">
-        <h1 className="text-2xl font-bold text-gray-800">Workout App</h1>
-        <p className="text-sm text-gray-500 text-center">
-          請使用 Google 帳號登入以開始記錄訓練
-        </p>
-        <GoogleSignInButton />
+      <main className="min-h-screen flex flex-col items-center justify-center gap-6 bg-white px-6">
+        {/* Mascot with floating animation */}
+        <div className="animate-fade-in-up">
+          <DuckMascot size="2xl" animationStyle="wave" />
+        </div>
+
+        {/* Welcome text with staggered fade-in */}
+        <div className="flex flex-col items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-800 animate-fade-in-up-delay-1">
+            Workout App
+          </h1>
+          <p className="text-sm text-gray-500 text-center animate-fade-in-up-delay-2">
+            請使用 Google 帳號登入以開始記錄訓練 💪
+          </p>
+        </div>
+
+        {/* Sign-in button */}
+        <div className="animate-fade-in-up-delay-3">
+          <GoogleSignInButton />
+        </div>
       </main>
     );
   }

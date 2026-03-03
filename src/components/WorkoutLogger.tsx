@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import {
   X,
   Trash2,
   GripVertical,
+  Eye,
 } from "lucide-react";
 import {
   DndContext,
@@ -26,7 +27,6 @@ import {
   DragEndEvent,
 } from "@dnd-kit/core";
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
@@ -39,28 +39,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { exercisesApi, workoutsApi, type Exercise } from "@/lib/api";
-import { usePreviousExerciseData } from "@/hooks/usePreviousExerciseData";
-import {
-  useTemplateDetails,
-  useWorkoutTemplates,
-} from "@/hooks/useWorkoutTemplates";
-import { useRouter, useSearchParams } from "next/navigation";
+import { type Exercise } from "@/lib/api";
+import { useWorkout, type ExerciseBlock } from "@/contexts/WorkoutContext";
+import { useRouter } from "next/navigation";
 import DuckMascot from "./DuckMascot";
-
-interface SetLog {
-  set_order: number;
-  weight: number | null;
-  reps: number | null;
-  completed: boolean;
-  previous?: string;
-}
-
-interface ExerciseBlock {
-  id: string; // Unique ID for drag-and-drop
-  exercise: Exercise;
-  sets: SetLog[];
-}
+import ExerciseImageDialog from "./ExerciseImageDialog";
 
 // Sortable Exercise Card Component
 function SortableExerciseCard({
@@ -71,6 +54,7 @@ function SortableExerciseCard({
   toggleSetComplete,
   deleteSet,
   addSet,
+  onViewExercise,
 }: {
   block: ExerciseBlock;
   blockIndex: number;
@@ -79,6 +63,7 @@ function SortableExerciseCard({
   toggleSetComplete: (blockIndex: number, setIndex: number) => void;
   deleteSet: (blockIndex: number, setIndex: number) => void;
   addSet: (blockIndex: number) => void;
+  onViewExercise: (name: string, muscleGroup: string | null) => void;
 }) {
   const {
     attributes,
@@ -111,7 +96,14 @@ function SortableExerciseCard({
             <GripVertical className="h-5 w-5 text-[#AFAFAF]" />
           </button>
           <Dumbbell className="h-5 w-5" />
-          {block.exercise.name}
+          <span className="flex-1">{block.exercise.name}</span>
+          <button
+            onClick={() => onViewExercise(block.exercise.name, block.exercise.muscleGroup)}
+            className="p-1.5 rounded-md hover:bg-[#E8F5E9] text-[#AFAFAF] hover:text-[#58CC02] transition-colors"
+            title="查看動作"
+          >
+            <Eye className="h-4 w-4" />
+          </button>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -232,35 +224,47 @@ function SortableExerciseCard({
   );
 }
 
-export interface WorkoutSummary {
-  exerciseCount: number;
-  totalVolume: number;
-  duration: number;
-  exercises: Array<{ name: string; maxWeight: number }>;
-}
-
-interface WorkoutLoggerProps {
-  onFinish?: (summary: WorkoutSummary) => void;
-  onExercisesChange?: (
-    exercises: Array<{ exercise_id: string; name: string; muscle_group?: string }>
-  ) => void;
-}
-
-export default function WorkoutLogger({
-  onFinish,
-  onExercisesChange,
-}: WorkoutLoggerProps) {
+export default function WorkoutLogger() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const templateId = searchParams.get("template");
+  const workout = useWorkout();
 
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [exerciseBlocks, setExerciseBlocks] = useState<ExerciseBlock[]>([]);
+  const {
+    exerciseBlocks,
+    startTime,
+    elapsedTime,
+    templateInfo,
+    exercises,
+    getPrevious,
+    addExercise: ctxAddExercise,
+    addSet,
+    deleteSet,
+    updateSet,
+    toggleSetComplete,
+    reorderBlocks,
+    finishWorkout,
+    restTimer,
+    isRestTimerRunning,
+    isRestTimerExpanded,
+    defaultRestTime,
+    REST_TIME_OPTIONS,
+    setDefaultRestTime,
+    addRestTime,
+    stopRestTimer,
+    setIsRestTimerExpanded,
+  } = workout;
+
+  // UI-only local state
   const [showExercisePicker, setShowExercisePicker] = useState(false);
-  const [startTime] = useState(new Date());
-  const [elapsedTime, setElapsedTime] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [templateLoaded, setTemplateLoaded] = useState(false);
+  const [imageDialog, setImageDialog] = useState<{
+    open: boolean;
+    name: string;
+    muscleGroup: string | null;
+  }>({ open: false, name: "", muscleGroup: null });
+
+  const openImageDialog = (name: string, muscleGroup: string | null) => {
+    setImageDialog({ open: true, name, muscleGroup });
+  };
 
   // DnD sensors
   const sensors = useSensors(
@@ -274,95 +278,6 @@ export default function WorkoutLogger({
     })
   );
 
-  // Rest timer state
-  const [restTimer, setRestTimer] = useState<number | null>(null);
-  const [isRestTimerRunning, setIsRestTimerRunning] = useState(false);
-  const restTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [defaultRestTime, setDefaultRestTime] = useState(90); // Default 90 seconds
-  const REST_TIME_OPTIONS = [30, 60, 90, 120, 180]; // Available rest time options
-  const [isRestTimerExpanded, setIsRestTimerExpanded] = useState(true); // For floating timer
-
-  // Track exercise IDs for fetching previous data
-  const exerciseIds = useMemo(
-    () => exerciseBlocks.map((block) => block.exercise.id),
-    [exerciseBlocks]
-  );
-  const { getPrevious, fetchForExercise } = usePreviousExerciseData(exerciseIds);
-
-  // Load template details
-  const { exercises: templateExercises } = useTemplateDetails(templateId);
-  const { templates, updateTemplateUsage } = useWorkoutTemplates();
-
-  // Get current template info
-  const currentTemplate = useMemo(() => {
-    if (!templateId) return null;
-    return templates.find((t) => t.id === templateId) || null;
-  }, [templateId, templates]);
-
-  // Load exercises from template
-  useEffect(() => {
-    if (templateId && templateExercises.length > 0 && !templateLoaded) {
-      const blocks: ExerciseBlock[] = templateExercises.map((te, index) => ({
-        id: `block-${te.exercise?.id || index}-${Date.now()}`,
-        exercise: {
-          id: te.exercise?.id || "",
-          name: te.exercise?.name || "",
-          type: te.exercise?.type || null,
-          muscleGroup: te.exercise?.muscleGroup || null,
-          isCustom: null,
-          createdAt: null,
-          deletedAt: null,
-        },
-        sets: Array.from({ length: te.defaultSets || 3 }, (_, i) => ({
-          set_order: i + 1,
-          weight: te.defaultWeight || null,
-          reps: te.defaultReps || null,
-          completed: false,
-        })),
-      }));
-      // Use functional update to avoid lint warning
-      setExerciseBlocks(() => blocks);
-      setTemplateLoaded(() => true);
-
-      // Update template usage count
-      updateTemplateUsage(templateId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateId, templateExercises.length, templateLoaded]);
-
-  // Notify parent of exercise changes (for saving as template)
-  useEffect(() => {
-    if (onExercisesChange) {
-      const exerciseList = exerciseBlocks.map((block) => ({
-        exercise_id: block.exercise.id,
-        name: block.exercise.name,
-        muscle_group: block.exercise.muscleGroup || undefined,
-      }));
-      onExercisesChange(exerciseList);
-    }
-  }, [exerciseBlocks, onExercisesChange]);
-
-  // Fetch exercises on mount
-  useEffect(() => {
-    const fetchExercises = async () => {
-      try {
-        const data = await exercisesApi.list();
-        setExercises(data);
-      } catch (error) {
-        console.error("Failed to fetch exercises:", error);
-      }
-    };
-    fetchExercises();
-  }, []);
-
-  // Timer
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setElapsedTime(Math.floor((Date.now() - startTime.getTime()) / 1000));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [startTime]);
-
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -370,279 +285,16 @@ export default function WorkoutLogger({
     return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
-  const addExercise = async (exercise: Exercise) => {
-    // Fetch previous data for this exercise
-    await fetchForExercise(exercise.id);
-
-    setExerciseBlocks((prev) => [
-      ...prev,
-      {
-        id: `block-${exercise.id}-${Date.now()}`,
-        exercise,
-        sets: [{ set_order: 1, weight: null, reps: null, completed: false }],
-      },
-    ]);
+  const handleAddExercise = async (exercise: Exercise) => {
+    await ctxAddExercise(exercise);
     setShowExercisePicker(false);
     setSearchQuery("");
   };
 
-  const addSet = (blockIndex: number) => {
-    setExerciseBlocks((prev) => {
-      const updated = [...prev];
-      const block = updated[blockIndex];
-      // Get the last completed set's values to pre-fill
-      const lastCompletedSet = [...block.sets].reverse().find(s => s.completed);
-      block.sets.push({
-        set_order: block.sets.length + 1,
-        weight: lastCompletedSet?.weight ?? null,
-        reps: lastCompletedSet?.reps ?? null,
-        completed: false,
-      });
-      return updated;
-    });
-  };
-
-  const deleteSet = (blockIndex: number, setIndex: number) => {
-    setExerciseBlocks((prev) => {
-      const updated = [...prev];
-      const block = updated[blockIndex];
-      // Don't allow deleting if only one set remains
-      if (block.sets.length <= 1) return prev;
-      
-      block.sets.splice(setIndex, 1);
-      // Re-number the sets
-      block.sets.forEach((s, i) => {
-        s.set_order = i + 1;
-      });
-      return updated;
-    });
-  };
-
-  const updateSet = (
-    blockIndex: number,
-    setIndex: number,
-    field: "weight" | "reps",
-    value: string
-  ) => {
-    setExerciseBlocks((prev) => {
-      const updated = [...prev];
-      const numValue = value === "" ? null : parseFloat(value);
-      updated[blockIndex].sets[setIndex][field] = numValue;
-      return updated;
-    });
-  };
-
-  const toggleSetComplete = (blockIndex: number, setIndex: number) => {
-    const block = exerciseBlocks[blockIndex];
-    const set = block.sets[setIndex];
-
-    // If trying to mark as complete, validate inputs
-    if (!set.completed) {
-      if (
-        set.weight === null ||
-        set.weight <= 0 ||
-        set.reps === null ||
-        set.reps <= 0
-      ) {
-        alert("請先輸入重量和次數！");
-        return;
-      }
-    }
-
-    // Deep clone to trigger React re-render
-    setExerciseBlocks((prev) => {
-      const newBlocks = prev.map((b, bi) => {
-        if (bi !== blockIndex) return b;
-        return {
-          ...b,
-          sets: b.sets.map((s, si) => {
-            if (si !== setIndex) return s;
-            return { ...s, completed: !s.completed };
-          }),
-        };
-      });
-      return newBlocks;
-    });
-
-    // Start rest timer when completing a set (not when uncompleting)
-    if (!set.completed) {
-      startRestTimer(defaultRestTime);
-      
-      // Auto-fill next uncompleted set with same weight/reps
-      const nextSetIndex = setIndex + 1;
-      if (nextSetIndex < block.sets.length) {
-        const nextSet = block.sets[nextSetIndex];
-        if (!nextSet.completed) {
-          setExerciseBlocks((prev) => {
-            const newBlocks = [...prev];
-            const targetBlock = newBlocks[blockIndex];
-            if (targetBlock.sets[nextSetIndex]) {
-              targetBlock.sets[nextSetIndex] = {
-                ...targetBlock.sets[nextSetIndex],
-                weight: set.weight,
-                reps: set.reps,
-              };
-            }
-            return newBlocks;
-          });
-        }
-      }
-    }
-  };
-
-  // Play notification sound using Web Audio API
-  const playRestEndSound = useCallback(() => {
-    try {
-      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      
-      // Play 3 short beeps
-      const playBeep = (time: number) => {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 880; // A5 note
-        oscillator.type = "sine";
-        
-        gainNode.gain.setValueAtTime(0.3, time);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
-        
-        oscillator.start(time);
-        oscillator.stop(time + 0.15);
-      };
-      
-      const now = audioContext.currentTime;
-      playBeep(now);
-      playBeep(now + 0.2);
-      playBeep(now + 0.4);
-    } catch (error) {
-      console.error("Failed to play sound:", error);
-    }
-  }, []);
-
-  // Rest timer functions
-  const startRestTimer = (seconds: number) => {
-    if (restTimerRef.current) {
-      clearInterval(restTimerRef.current);
-    }
-    setRestTimer(seconds);
-    setIsRestTimerRunning(true);
-    setIsRestTimerExpanded(true);
-
-    restTimerRef.current = setInterval(() => {
-      setRestTimer((prev) => {
-        if (prev === null || prev <= 1) {
-          clearInterval(restTimerRef.current!);
-          setIsRestTimerRunning(false);
-          playRestEndSound(); // Play sound when rest ends
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  const stopRestTimer = () => {
-    if (restTimerRef.current) {
-      clearInterval(restTimerRef.current);
-    }
-    setRestTimer(null);
-    setIsRestTimerRunning(false);
-  };
-
-  const addRestTime = (seconds: number) => {
-    setRestTimer((prev) => (prev || 0) + seconds);
-  };
-
-  // Cleanup rest timer on unmount
-  useEffect(() => {
-    return () => {
-      if (restTimerRef.current) {
-        clearInterval(restTimerRef.current);
-      }
-    };
-  }, []);
-
-  const calculateSummary = useCallback((): WorkoutSummary => {
-    let totalVolume = 0;
-    const exerciseSummaries: Array<{ name: string; maxWeight: number }> = [];
-
-    exerciseBlocks.forEach((block) => {
-      let maxWeight = 0;
-      block.sets.forEach((set) => {
-        if (set.completed && set.weight && set.reps) {
-          totalVolume += set.weight * set.reps;
-          if (set.weight > maxWeight) maxWeight = set.weight;
-        }
-      });
-      if (maxWeight > 0) {
-        exerciseSummaries.push({ name: block.exercise.name, maxWeight });
-      }
-    });
-
-    return {
-      exerciseCount: exerciseBlocks.length,
-      totalVolume: Math.round(totalVolume),
-      duration: elapsedTime,
-      exercises: exerciseSummaries,
-    };
-  }, [exerciseBlocks, elapsedTime]);
-
-  const handleFinish = async () => {
-    const endTime = new Date();
-
-    // Prepare workout data
-    const logs: Array<{
-      exercise_id: string;
-      set_order: number;
-      weight: number | null;
-      reps: number | null;
-    }> = [];
-
-    exerciseBlocks.forEach((block) => {
-      block.sets.forEach((set) => {
-        if (set.completed) {
-          logs.push({
-            exercise_id: block.exercise.id,
-            set_order: set.set_order,
-            weight: set.weight,
-            reps: set.reps,
-          });
-        }
-      });
-    });
-
-    try {
-      await workoutsApi.create({
-        started_at: startTime.toISOString(),
-        ended_at: endTime.toISOString(),
-        template_id: templateId || undefined,
-        logs,
-      });
-
-      const summary = calculateSummary();
-      if (onFinish) {
-        onFinish(summary);
-      } else {
-        router.push("/");
-      }
-    } catch (error) {
-      console.error("Failed to save workout:", error);
-    }
-  };
-
-  // Handle drag end for reordering exercise blocks
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-
     if (over && active.id !== over.id) {
-      setExerciseBlocks((items) => {
-        const oldIndex = items.findIndex((i) => i.id === active.id);
-        const newIndex = items.findIndex((i) => i.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
+      reorderBlocks(String(active.id), String(over.id));
     }
   };
 
@@ -682,7 +334,7 @@ export default function WorkoutLogger({
             </div>
             <Button
               className="bg-[#58CC02] hover:bg-[#46A302] text-white"
-              onClick={handleFinish}
+              onClick={finishWorkout}
               disabled={exerciseBlocks.length === 0}
             >
               Finish
@@ -697,19 +349,19 @@ export default function WorkoutLogger({
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <DuckMascot 
-                muscleGroup={currentTemplate?.muscleGroup} 
+                muscleGroup={templateInfo?.muscleGroup} 
                 size="sm" 
                 animate={false} 
               />
               <div>
                 <h2 className="text-xl font-bold text-[#3C3C3C]">
-                  {currentTemplate ? currentTemplate.name : "自由訓練"}
+                  {templateInfo ? templateInfo.name : "自由訓練"}
                 </h2>
                 <p className="text-[#AFAFAF] text-sm">
-                  {startTime.toLocaleDateString()} - {formatTime(elapsedTime)}
-                  {currentTemplate?.muscleGroup && (
+                  {startTime?.toLocaleDateString()} - {formatTime(elapsedTime)}
+                  {templateInfo?.muscleGroup && (
                     <span className="ml-2 px-2 py-0.5 rounded-full bg-[#E8F5E9] text-[#58CC02] text-xs">
-                      {currentTemplate.muscleGroup}
+                      {templateInfo.muscleGroup}
                     </span>
                   )}
                 </p>
@@ -767,6 +419,7 @@ export default function WorkoutLogger({
                 toggleSetComplete={toggleSetComplete}
                 deleteSet={deleteSet}
                 addSet={addSet}
+                onViewExercise={openImageDialog}
               />
             ))}
           </SortableContext>
@@ -841,6 +494,14 @@ export default function WorkoutLogger({
         </div>
       )}
 
+      {/* Exercise Image Dialog */}
+      <ExerciseImageDialog
+        open={imageDialog.open}
+        onOpenChange={(open) => setImageDialog((prev) => ({ ...prev, open }))}
+        exerciseName={imageDialog.name}
+        muscleGroup={imageDialog.muscleGroup}
+      />
+
       {/* Exercise Picker Dialog */}
       <Dialog open={showExercisePicker} onOpenChange={setShowExercisePicker}>
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
@@ -868,7 +529,7 @@ export default function WorkoutLogger({
                       key={exercise.id}
                       variant="ghost"
                       className="w-full justify-start text-[#3C3C3C] hover:bg-[#F7F7F7]"
-                      onClick={() => addExercise(exercise)}
+                      onClick={() => handleAddExercise(exercise)}
                     >
                       <Dumbbell className="h-4 w-4 mr-2 text-[#AFAFAF]" />
                       {exercise.name}

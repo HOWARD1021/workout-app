@@ -4,15 +4,21 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Dumbbell, Search, Plus } from "lucide-react";
+import { ArrowLeft, Dumbbell, Search, Plus, Eye } from "lucide-react";
 import { exercisesApi, type Exercise } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import ExerciseImageDialog from "@/components/ExerciseImageDialog";
 
 export default function ExercisesPage() {
   const router = useRouter();
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [imageDialog, setImageDialog] = useState<{
+    open: boolean;
+    name: string;
+    muscleGroup: string | null;
+  }>({ open: false, name: "", muscleGroup: null });
 
   useEffect(() => {
     const fetchExercises = async () => {
@@ -94,16 +100,37 @@ export default function ExercisesPage() {
                     className="flex items-center gap-3 p-3 rounded-lg bg-[#F7F7F7]"
                   >
                     <Dumbbell className="h-5 w-5 text-[#58CC02]" />
-                    <div>
+                    <div className="flex-1">
                       <p className="font-medium text-[#3C3C3C]">{exercise.name}</p>
                       <p className="text-sm text-[#AFAFAF]">{exercise.type}</p>
                     </div>
+                    <button
+                      onClick={() =>
+                        setImageDialog({
+                          open: true,
+                          name: exercise.name,
+                          muscleGroup: exercise.muscleGroup,
+                        })
+                      }
+                      className="p-2 rounded-md hover:bg-[#E8F5E9] text-[#AFAFAF] hover:text-[#58CC02] transition-colors"
+                      title="查看動作"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
         ))}
+
+        {/* Exercise Image Dialog */}
+        <ExerciseImageDialog
+          open={imageDialog.open}
+          onOpenChange={(open) => setImageDialog((prev) => ({ ...prev, open }))}
+          exerciseName={imageDialog.name}
+          muscleGroup={imageDialog.muscleGroup}
+        />
 
         {/* Add Exercise Button (placeholder) */}
         <Button

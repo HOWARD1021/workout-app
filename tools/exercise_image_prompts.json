@@ -1,0 +1,454 @@
+{
+  "description": "Exercise image generation prompts for workout-app. Use with batch image generator.",
+  "style_guide": "All images should use a consistent style: clean white background, modern flat illustration, no text/labels. The person should be gender-neutral, athletic build, wearing simple gym attire (grey/black).",
+  "prompts": [
+    {
+      "name": "bench_press_demo",
+      "exercise": "Bench Press",
+      "muscle_group": "Chest",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person lying on a flat bench performing a barbell bench press. Show the person gripping the barbell slightly wider than shoulder-width, lowering the bar to mid-chest. Include a subtle downward arrow showing the bar path. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "bench_press_anatomy",
+      "exercise": "Bench Press",
+      "muscle_group": "Chest",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in the barbell bench press. Front view of human body. Highlight pectoralis major in bright red as the primary muscle. Highlight anterior deltoids and triceps in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "incline_bench_press_demo",
+      "exercise": "Incline Bench Press",
+      "muscle_group": "Chest",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person lying on a 30-45 degree incline bench performing a barbell incline bench press. Show the person pressing the barbell upward from upper chest. Include subtle upward arrows showing the press direction. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "incline_bench_press_anatomy",
+      "exercise": "Incline Bench Press",
+      "muscle_group": "Chest",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in the incline bench press. Front view of human body. Highlight upper pectoralis major (clavicular head) in bright red as the primary muscle. Highlight anterior deltoids and triceps in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "dumbbell_fly_demo",
+      "exercise": "Dumbbell Fly",
+      "muscle_group": "Chest",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person lying on a flat bench performing dumbbell flyes. Show the person with arms extended out to the sides holding dumbbells, slight bend in elbows, in the open/stretched position. Include subtle inward arc arrows showing the fly motion. Front-angled view. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "dumbbell_fly_anatomy",
+      "exercise": "Dumbbell Fly",
+      "muscle_group": "Chest",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in dumbbell flyes. Front view of human body. Highlight pectoralis major (sternal head) in bright red as the primary muscle. Highlight anterior deltoids and biceps in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "push_up_demo",
+      "exercise": "Push Up",
+      "muscle_group": "Chest",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing a push-up. Show the person in the lowered position with arms bent, body in a straight plank line from head to heels, hands slightly wider than shoulder-width. Include a subtle downward arrow at the chest. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "push_up_anatomy",
+      "exercise": "Push Up",
+      "muscle_group": "Chest",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in push-ups. Front view of human body. Highlight pectoralis major in bright red as the primary muscle. Highlight triceps, anterior deltoids, and core muscles in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "cable_crossover_demo",
+      "exercise": "Cable Crossover",
+      "muscle_group": "Chest",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing cable crossovers. Show the person standing between two cable machines, arms extended and crossing in front of the body at chest height, slight forward lean. Include subtle inward arc arrows showing the cable path. Front view. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "cable_crossover_anatomy",
+      "exercise": "Cable Crossover",
+      "muscle_group": "Chest",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in cable crossovers. Front view of human body. Highlight pectoralis major (both sternal and clavicular heads) in bright red as primary muscles. Highlight anterior deltoids and biceps in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "deadlift_demo",
+      "exercise": "Deadlift",
+      "muscle_group": "Back",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing a conventional deadlift. Show the person in the mid-pull position, barbell at knee height, back flat, hips hinging, arms straight. Include a subtle upward arrow showing the pull direction. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "deadlift_anatomy",
+      "exercise": "Deadlift",
+      "muscle_group": "Back",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in the deadlift. Back view of human body. Highlight erector spinae, glutes, and hamstrings in bright red as primary muscles. Highlight latissimus dorsi, trapezius, quadriceps, and forearms in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "pull_up_demo",
+      "exercise": "Pull Up",
+      "muscle_group": "Back",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing a pull-up on a bar. Show the person at the top position with chin above the bar, arms pulled in, shoulder blades squeezed together. Include a subtle upward arrow. Front view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "pull_up_anatomy",
+      "exercise": "Pull Up",
+      "muscle_group": "Back",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in pull-ups. Back view of human body. Highlight latissimus dorsi in bright red as the primary muscle. Highlight biceps, rhomboids, trapezius (lower), and rear deltoids in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "lat_pulldown_demo",
+      "exercise": "Lat Pulldown",
+      "muscle_group": "Back",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person seated at a lat pulldown machine, pulling a wide bar down to upper chest. Show the person leaning slightly back, elbows driving down and back. Include a subtle downward arrow on the bar. Front view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "lat_pulldown_anatomy",
+      "exercise": "Lat Pulldown",
+      "muscle_group": "Back",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in lat pulldowns. Back view of human body. Highlight latissimus dorsi in bright red as the primary muscle. Highlight biceps, rhomboids, and teres major in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "barbell_row_demo",
+      "exercise": "Barbell Row",
+      "muscle_group": "Back",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing a bent-over barbell row. Show the person hinged forward at about 45 degrees, pulling the barbell toward the lower ribcage, elbows driving back. Include a subtle upward arrow at the barbell. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "barbell_row_anatomy",
+      "exercise": "Barbell Row",
+      "muscle_group": "Back",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in barbell rows. Back view of human body. Highlight latissimus dorsi, rhomboids, and trapezius (middle) in bright red as primary muscles. Highlight rear deltoids, biceps, and erector spinae in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "seated_cable_row_demo",
+      "exercise": "Seated Cable Row",
+      "muscle_group": "Back",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person seated at a cable row machine, pulling a V-handle toward the abdomen. Show the person sitting upright with knees slightly bent, chest lifted, squeezing shoulder blades together. Include a subtle backward arrow showing the pull direction. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "seated_cable_row_anatomy",
+      "exercise": "Seated Cable Row",
+      "muscle_group": "Back",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in seated cable rows. Back view of human body. Highlight rhomboids, trapezius (middle), and latissimus dorsi in bright red as primary muscles. Highlight rear deltoids, biceps, and erector spinae in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "squat_demo",
+      "exercise": "Squat",
+      "muscle_group": "Legs",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing a barbell back squat. Show the person in the bottom position, thighs parallel to the ground, barbell resting on upper back, feet shoulder-width apart. Include subtle downward arrows at the hips. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "squat_anatomy",
+      "exercise": "Squat",
+      "muscle_group": "Legs",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in barbell squats. Front view of human body. Highlight quadriceps and gluteus maximus in bright red as primary muscles. Highlight hamstrings, adductors, erector spinae, and calves in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "leg_press_demo",
+      "exercise": "Leg Press",
+      "muscle_group": "Legs",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person using a 45-degree leg press machine. Show the person seated with back against the pad, legs bent at 90 degrees pushing the platform upward, feet shoulder-width apart on the platform. Include subtle upward arrows on the platform. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "leg_press_anatomy",
+      "exercise": "Leg Press",
+      "muscle_group": "Legs",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in the leg press. Front view of human body. Highlight quadriceps and gluteus maximus in bright red as primary muscles. Highlight hamstrings and calves in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "romanian_deadlift_demo",
+      "exercise": "Romanian Deadlift",
+      "muscle_group": "Legs",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing a Romanian deadlift with a barbell. Show the person standing with slight knee bend, hinging at the hips, lowering the barbell along the legs to about shin level, back flat. Include a subtle downward arrow along the bar path. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "romanian_deadlift_anatomy",
+      "exercise": "Romanian Deadlift",
+      "muscle_group": "Legs",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in the Romanian deadlift. Back view of human body. Highlight hamstrings and gluteus maximus in bright red as primary muscles. Highlight erector spinae, adductors, and calves in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "leg_curl_demo",
+      "exercise": "Leg Curl",
+      "muscle_group": "Legs",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing a lying leg curl on a machine. Show the person lying face down on the machine, curling the ankle pad upward toward the glutes, knees at about 90 degrees. Include a subtle upward arc arrow at the feet. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "leg_curl_anatomy",
+      "exercise": "Leg Curl",
+      "muscle_group": "Legs",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in leg curls. Back view of human body. Highlight hamstrings (biceps femoris, semitendinosus, semimembranosus) in bright red as the primary muscle. Highlight calves (gastrocnemius) in light pink as secondary muscle. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "leg_extension_demo",
+      "exercise": "Leg Extension",
+      "muscle_group": "Legs",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person seated on a leg extension machine. Show the person extending the legs to full lockout, ankle pad resting on the shins. Include a subtle upward arc arrow at the feet. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "leg_extension_anatomy",
+      "exercise": "Leg Extension",
+      "muscle_group": "Legs",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in leg extensions. Front view of human body. Highlight quadriceps (rectus femoris, vastus lateralis, vastus medialis, vastus intermedius) in bright red as the primary muscle. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "calf_raise_demo",
+      "exercise": "Calf Raise",
+      "muscle_group": "Legs",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing standing calf raises on a raised platform. Show the person standing on the balls of their feet at the top of the movement, heels elevated high, holding a dumbbell. Include a subtle upward arrow. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "calf_raise_anatomy",
+      "exercise": "Calf Raise",
+      "muscle_group": "Legs",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in calf raises. Back view of lower legs. Highlight gastrocnemius in bright red as the primary muscle. Highlight soleus in light pink as secondary muscle. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "overhead_press_demo",
+      "exercise": "Overhead Press",
+      "muscle_group": "Shoulders",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing a standing barbell overhead press. Show the person pressing the barbell overhead with arms fully extended, bar directly above the head, standing upright. Include a subtle upward arrow above the barbell. Front view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "overhead_press_anatomy",
+      "exercise": "Overhead Press",
+      "muscle_group": "Shoulders",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in the overhead press. Front view of human body. Highlight anterior and lateral deltoids in bright red as primary muscles. Highlight triceps, upper pectoralis, and trapezius (upper) in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "lateral_raise_demo",
+      "exercise": "Lateral Raise",
+      "muscle_group": "Shoulders",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing dumbbell lateral raises. Show the person standing upright, arms raised out to the sides to shoulder height holding dumbbells, slight bend in elbows. Include subtle outward arc arrows. Front view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "lateral_raise_anatomy",
+      "exercise": "Lateral Raise",
+      "muscle_group": "Shoulders",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in lateral raises. Front view of human body. Highlight lateral (medial) deltoid in bright red as the primary muscle. Highlight supraspinatus and trapezius (upper) in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "front_raise_demo",
+      "exercise": "Front Raise",
+      "muscle_group": "Shoulders",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing dumbbell front raises. Show the person standing upright, one arm raised forward to shoulder height holding a dumbbell, arm nearly straight. Include a subtle upward arrow in front. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "front_raise_anatomy",
+      "exercise": "Front Raise",
+      "muscle_group": "Shoulders",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in front raises. Front view of human body. Highlight anterior deltoid in bright red as the primary muscle. Highlight upper pectoralis and lateral deltoid in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "face_pull_demo",
+      "exercise": "Face Pull",
+      "muscle_group": "Shoulders",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing face pulls with a rope attachment on a cable machine. Show the person pulling the rope toward the face with elbows high and flared out, squeezing the shoulder blades. Include subtle backward arrows at the hands. Front-angled view. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "face_pull_anatomy",
+      "exercise": "Face Pull",
+      "muscle_group": "Shoulders",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in face pulls. Back view of human body. Highlight rear deltoids, rhomboids, and trapezius (middle) in bright red as primary muscles. Highlight infraspinatus and external rotators in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "bicep_curl_demo",
+      "exercise": "Bicep Curl",
+      "muscle_group": "Arms",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing standing dumbbell bicep curls. Show the person standing upright, one arm curling a dumbbell upward with the elbow pinned to the side, forearm supinated. Include a subtle upward arc arrow. Front view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "bicep_curl_anatomy",
+      "exercise": "Bicep Curl",
+      "muscle_group": "Arms",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in bicep curls. Front view of the arm. Highlight biceps brachii in bright red as the primary muscle. Highlight brachialis and brachioradialis in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "tricep_pushdown_demo",
+      "exercise": "Tricep Pushdown",
+      "muscle_group": "Arms",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing tricep pushdowns with a straight bar on a cable machine. Show the person standing upright, elbows pinned to the sides, pushing the bar down to full arm extension. Include a subtle downward arrow. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "tricep_pushdown_anatomy",
+      "exercise": "Tricep Pushdown",
+      "muscle_group": "Arms",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in tricep pushdowns. Back view of the arm. Highlight triceps brachii (all three heads: long, lateral, medial) in bright red as the primary muscle. Highlight anconeus in light pink as secondary muscle. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "hammer_curl_demo",
+      "exercise": "Hammer Curl",
+      "muscle_group": "Arms",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing standing dumbbell hammer curls. Show the person standing upright, curling a dumbbell with a neutral grip (palms facing each other), elbow pinned to the side. Include a subtle upward arrow. Front view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "hammer_curl_anatomy",
+      "exercise": "Hammer Curl",
+      "muscle_group": "Arms",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in hammer curls. Front view of the arm. Highlight brachioradialis and brachialis in bright red as primary muscles. Highlight biceps brachii in light pink as secondary muscle. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "skull_crusher_demo",
+      "exercise": "Skull Crusher",
+      "muscle_group": "Arms",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing skull crushers (lying tricep extensions) on a flat bench with an EZ bar. Show the person lying on the bench, lowering the bar toward the forehead by bending at the elbows, upper arms perpendicular to the floor. Include a subtle downward arc arrow. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "skull_crusher_anatomy",
+      "exercise": "Skull Crusher",
+      "muscle_group": "Arms",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in skull crushers. Back view of the arm. Highlight triceps brachii (especially the long head) in bright red as the primary muscle. Highlight anconeus in light pink as secondary muscle. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "plank_demo",
+      "exercise": "Plank",
+      "muscle_group": "Core",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing a forearm plank. Show the person in a prone position supported on forearms and toes, body in a perfectly straight line from head to heels, core engaged. Include a subtle straight line indicating body alignment. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "plank_anatomy",
+      "exercise": "Plank",
+      "muscle_group": "Core",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in the plank. Front view of human body. Highlight rectus abdominis and transverse abdominis in bright red as primary muscles. Highlight obliques, erector spinae, deltoids, and quadriceps in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "crunch_demo",
+      "exercise": "Crunch",
+      "muscle_group": "Core",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing a crunch. Show the person lying on the floor with knees bent, feet flat, curling the upper back off the floor toward the knees, hands behind the head. Include a subtle upward arrow at the shoulders. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "crunch_anatomy",
+      "exercise": "Crunch",
+      "muscle_group": "Core",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in crunches. Front view of human body. Highlight rectus abdominis (upper portion) in bright red as the primary muscle. Highlight obliques in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "leg_raise_demo",
+      "exercise": "Leg Raise",
+      "muscle_group": "Core",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing hanging leg raises on a pull-up bar. Show the person hanging from the bar with arms straight, raising straight legs up to about 90 degrees. Include a subtle upward arc arrow at the feet. Front view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "leg_raise_anatomy",
+      "exercise": "Leg Raise",
+      "muscle_group": "Core",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in leg raises. Front view of human body. Highlight rectus abdominis (lower portion) and hip flexors (iliopsoas) in bright red as primary muscles. Highlight obliques and quadriceps in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "russian_twist_demo",
+      "exercise": "Russian Twist",
+      "muscle_group": "Core",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person performing Russian twists. Show the person seated on the floor with knees bent, feet slightly off the ground, torso leaned back at 45 degrees, rotating the upper body to one side while holding a weight plate. Include subtle rotation arrows. Front view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "russian_twist_anatomy",
+      "exercise": "Russian Twist",
+      "muscle_group": "Core",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in Russian twists. Front view of human body. Highlight obliques (internal and external) in bright red as primary muscles. Highlight rectus abdominis, hip flexors, and transverse abdominis in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "running_demo",
+      "exercise": "Running",
+      "muscle_group": "Full Body",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person running with proper form. Show the person in mid-stride, one foot off the ground, arms swinging naturally, upright posture, looking forward. Include subtle motion lines behind the body. Side view angle. Athletic person in grey gym attire and running shoes. Clean white background. No text, no labels."
+    },
+    {
+      "name": "running_anatomy",
+      "exercise": "Running",
+      "muscle_group": "Full Body",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in running. Side view of human body. Highlight quadriceps, hamstrings, gluteus maximus, and calves in bright red as primary muscles. Highlight hip flexors, core, and tibialis anterior in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "cycling_demo",
+      "exercise": "Cycling",
+      "muscle_group": "Legs",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person cycling on a stationary bike. Show the person seated on the bike with one leg at the bottom of the pedal stroke and one at the top, hands on the handlebars, upright posture. Include subtle circular arrows at the pedals showing the rotation. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "cycling_anatomy",
+      "exercise": "Cycling",
+      "muscle_group": "Legs",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in cycling. Side view of the lower body. Highlight quadriceps, gluteus maximus, and hamstrings in bright red as primary muscles. Highlight calves, hip flexors, and core in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "rowing_demo",
+      "exercise": "Rowing",
+      "muscle_group": "Full Body",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person using a rowing machine (ergometer). Show the person in the drive phase, legs pushing back, arms pulling the handle toward the chest, back slightly leaned back. Include subtle backward arrows showing the pull direction. Side view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "rowing_anatomy",
+      "exercise": "Rowing",
+      "muscle_group": "Full Body",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in rowing. Back view of human body. Highlight latissimus dorsi, quadriceps, and glutes in bright red as primary muscles. Highlight hamstrings, biceps, trapezius, deltoids, and core in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    },
+    {
+      "name": "jump_rope_demo",
+      "exercise": "Jump Rope",
+      "muscle_group": "Full Body",
+      "type": "demo",
+      "prompt": "A clean, modern flat illustration of a person jumping rope. Show the person mid-jump, slightly off the ground, rope arcing overhead, wrists close to the body, light bounce on the balls of the feet. Include subtle upward arrows at the feet and arc lines for the rope. Front view angle. Athletic person in grey gym attire. Clean white background. No text, no labels."
+    },
+    {
+      "name": "jump_rope_anatomy",
+      "exercise": "Jump Rope",
+      "muscle_group": "Full Body",
+      "type": "anatomy",
+      "prompt": "A clean anatomical muscle diagram showing muscles used in jump rope. Front view of human body. Highlight calves (gastrocnemius, soleus) and quadriceps in bright red as primary muscles. Highlight hamstrings, glutes, forearms, deltoids, and core in light pink as secondary muscles. Medical illustration style but accessible. Clean white background. No text, no labels."
+    }
+  ]
+}
