@@ -8,9 +8,11 @@ import { ArrowLeft, Dumbbell, Search, Plus, Eye } from "lucide-react";
 import { exercisesApi, type Exercise } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import ExerciseImageDialog from "@/components/ExerciseImageDialog";
+import { useTranslation } from "@/lib/i18n";
 
 export default function ExercisesPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -66,9 +68,9 @@ export default function ExercisesPage() {
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="sm" onClick={() => router.push("/")}>
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Back
+              {t("common.back")}
             </Button>
-            <h1 className="font-bold text-lg text-[#3C3C3C]">Exercise Library</h1>
+            <h1 className="font-bold text-lg text-[#2D3648]">{t("exercises.title")}</h1>
             <div className="w-16" />
           </div>
         </div>
@@ -79,7 +81,7 @@ export default function ExercisesPage() {
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#AFAFAF]" />
           <Input
-            placeholder="Search exercises..."
+            placeholder={t("workout.searchExercises")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 border-2 border-[#E5E5E5] focus:border-[#58CC02]"
@@ -90,7 +92,7 @@ export default function ExercisesPage() {
         {Object.entries(groupedExercises).map(([group, groupExercises]) => (
           <Card key={group} className="bg-white border-2 border-[#E5E5E5] mb-4">
             <CardHeader className="pb-2">
-              <CardTitle className="text-[#3C3C3C] text-lg">{group}</CardTitle>
+              <CardTitle className="text-[#2D3648] text-lg">{group}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -101,7 +103,7 @@ export default function ExercisesPage() {
                   >
                     <Dumbbell className="h-5 w-5 text-[#58CC02]" />
                     <div className="flex-1">
-                      <p className="font-medium text-[#3C3C3C]">{exercise.name}</p>
+                      <p className="font-medium text-[#2D3648]">{exercise.name}</p>
                       <p className="text-sm text-[#AFAFAF]">{exercise.type}</p>
                     </div>
                     <button
@@ -138,7 +140,7 @@ export default function ExercisesPage() {
           disabled
         >
           <Plus className="h-5 w-5 mr-2" />
-          Add Custom Exercise (Coming Soon)
+          {t("exercises.addCustom")}
         </Button>
       </div>
     </div>

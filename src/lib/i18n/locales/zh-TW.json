@@ -8,7 +8,13 @@
     "edit": "編輯",
     "add": "新增",
     "loading": "載入中...",
-    "search": "搜尋"
+    "search": "搜尋",
+    "confirm": "確認",
+    "exercises": "個動作",
+    "sets": "組",
+    "times": "次",
+    "used": "使用",
+    "loginPrompt": "請使用 Google 帳號登入以開始記錄訓練 💪"
   },
   "home": {
     "title": "Workout",
@@ -18,12 +24,15 @@
     "statistics": "統計",
     "workouts": "訓練",
     "totalKg": "總容量 kg",
-    "progress": "進度"
+    "progress": "進度",
+    "timeToLift": "Time to lift! 💪",
+    "progressWorkouts": "進度：{count} 次訓練"
   },
   "workout": {
     "freeWorkout": "自由訓練",
     "defaultRestTime": "預設休息時間",
     "restTime": "休息時間",
+    "restTimer": "休息計時",
     "set": "組",
     "previous": "上次",
     "kg": "kg",
@@ -32,11 +41,15 @@
     "addExercise": "新增動作",
     "selectExercise": "選擇動作",
     "searchExercises": "搜尋動作...",
-    "enterWeightAndReps": "請先輸入重量和次數！"
+    "enterWeightAndReps": "請先輸入重量和次數！",
+    "skip": "跳過",
+    "active": "運動中",
+    "rest": "休息",
+    "goBack": "← 返回"
   },
   "complete": {
     "great": "你很棒！💪",
-    "awesome": "太厲害了！🔥",
+    "awesome": "太厉害了！🔥",
     "keepGoing": "繼續保持！🌟",
     "fitnessPro": "健身達人！🏆",
     "amazing": "超級棒！✨",
@@ -50,26 +63,70 @@
   },
   "templates": {
     "title": "訓練模板",
-    "create": "建立模板",
-    "selectTemplate": "選擇模板",
-    "startEmpty": "空白訓練",
+    "create": "新增模板",
+    "selectTemplate": "選擇訓練模板 🦆",
+    "startEmpty": "開始空白訓練",
     "recentlyUsed": "最近使用",
-    "noTemplates": "還沒有模板"
+    "noTemplates": "還沒有模板",
+    "noTemplatesHint": "完成一次訓練後可以儲存為模板！",
+    "searchTemplates": "搜尋模板...",
+    "noResults": "找不到「{query}」",
+    "useTemplate": "使用此模板開始訓練",
+    "createFirst": "建立第一個模板",
+    "noTemplatesYet": "還沒有任何訓練模板",
+    "deleteConfirm": "確定要刪除此模板？",
+    "deleteWarning": "此操作無法復原。模板將被永久刪除。",
+    "showExercises": "查看動作",
+    "hideExercises": "收起動作"
   },
   "exercises": {
     "title": "動作庫",
-    "noExercises": "還沒有動作"
+    "noExercises": "還沒有動作",
+    "addCustom": "新增自訂動作（即將推出）",
+    "viewExercise": "查看動作"
   },
   "analytics": {
     "title": "訓練統計",
     "totalWorkouts": "總訓練次數",
     "totalVolume": "總訓練量",
-    "streak": "連續天數"
+    "totalSets": "總組數",
+    "streak": "連續天數",
+    "recentWorkouts": "最近訓練",
+    "noWorkoutsYet": "還沒有訓練記錄，開始你的第一次訓練！",
+    "muscleGroups": "部位分析",
+    "weeklyFrequency": "週訓練頻率",
+    "trends": "趨勢分析",
+    "thisWeek": "本週",
+    "lastWeek": "上週",
+    "volume": "訓練量",
+    "maxWeight": "最大重量"
+  },
+  "friends": {
+    "title": "好友",
+    "friendList": "好友名單",
+    "activityFeed": "動態",
+    "addFriend": "新增好友",
+    "emailPlaceholder": "輸入好友 Email",
+    "send": "發送",
+    "inviteFailed": "邀請失敗，請確認 Email 是否正確",
+    "pendingRequests": "待回應請求",
+    "noFriends": "還沒有好友",
+    "noFriendsHint": "點擊右上角 + 新增好友",
+    "connected": "已連線",
+    "pending": "等待中",
+    "noActivity": "還沒有動態",
+    "you": "你",
+    "shareThreads": "分享到 Threads"
+  },
+  "achievements": {
+    "title": "成就",
+    "unlocked": "已解鎖成就",
+    "noAchievements": "這個分類還沒有成就"
   },
   "reminder": {
-    "title": "該運動了！",
-    "message": "已經 {days} 天沒有訓練了",
-    "startNow": "開始訓練",
+    "title": "嘿！",
+    "message": "你已經 {days} 天沒來運動了！",
+    "startNow": "現在開始運動 💪",
     "later": "稍後提醒"
   }
 }

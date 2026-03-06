@@ -57,7 +57,7 @@ export default function ExerciseImageDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-[#3C3C3C]">
+          <DialogTitle className="text-[#2D3648]">
             {exerciseName}
             {muscleGroup && (
               <span className="ml-2 text-sm font-normal px-2 py-0.5 rounded-full bg-[#E8F5E9] text-[#58CC02]">
@@ -75,8 +75,8 @@ export default function ExerciseImageDialog({
               onClick={() => setActiveTab(tab.key)}
               className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === tab.key
-                  ? "bg-white text-[#3C3C3C] shadow-sm"
-                  : "text-[#AFAFAF] hover:text-[#3C3C3C]"
+                  ? "bg-white text-[#2D3648] shadow-sm"
+                  : "text-[#AFAFAF] hover:text-[#2D3648]"
               }`}
             >
               {tab.icon}

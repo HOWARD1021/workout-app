@@ -1,20 +1,27 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getDb, workoutTemplates, workoutTemplateExercises } from "@/lib/db";
-import { eq, isNull, desc, sql } from "drizzle-orm";
+import { eq, isNull, desc, sql, and, or } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
 
-
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const user = await getCurrentUser(request);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { env } = getCloudflareContext();
     const db = getDb(env.DB);
 
-    // Get templates
+    // Get templates: user's own templates + public templates (user_id IS NULL)
     const templates = await db
       .select()
       .from(workoutTemplates)
-      .where(isNull(workoutTemplates.deletedAt))
+      .where(and(
+        isNull(workoutTemplates.deletedAt),
+        or(eq(workoutTemplates.userId, user.id), isNull(workoutTemplates.userId))
+      ))
       .orderBy(
         desc(workoutTemplates.isFavorite),
         desc(workoutTemplates.useCount),
@@ -45,6 +52,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const user = await getCurrentUser(request);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { env } = getCloudflareContext();
     const db = getDb(env.DB);
     const body = await request.json() as {
@@ -55,10 +67,11 @@ export async function POST(request: Request) {
       exercises?: Array<{ exercise_id: string; default_sets?: number; default_reps?: number; default_weight?: number }>;
     };
 
-    // Create template
+    // Create template with user_id
     const [template] = await db
       .insert(workoutTemplates)
       .values({
+        userId: user.id,
         name: body.name,
         description: body.description || null,
         muscleGroup: body.muscle_group || null,

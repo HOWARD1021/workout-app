@@ -15,6 +15,7 @@ import {
   type WorkoutTemplate,
 } from "@/hooks/useWorkoutTemplates";
 import DuckMascot from "./DuckMascot";
+import { useTranslation } from "@/lib/i18n";
 
 interface TemplateSelectorProps {
   open: boolean;
@@ -31,6 +32,7 @@ export default function TemplateSelector({
 }: TemplateSelectorProps) {
   const { templates, loading } = useWorkoutTemplates();
   const [searchQuery, setSearchQuery] = useState("");
+  const { t } = useTranslation();
 
   const filteredTemplates = templates.filter((t) =>
     t.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -64,7 +66,7 @@ export default function TemplateSelector({
 
       {/* Info Area */}
       <div className="p-3 text-left border-t border-[#F0F0F0]">
-        <h3 className="font-bold text-[#3C3C3C] truncate group-hover:text-[#58CC02] transition-colors">
+        <h3 className="font-bold text-[#2D3648] truncate group-hover:text-[#58CC02] transition-colors">
           {template.name}
         </h3>
         <div className="flex items-center gap-1 mt-1 text-sm text-[#AFAFAF]">
@@ -86,8 +88,8 @@ export default function TemplateSelector({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col p-0">
         <DialogHeader className="p-4 pb-0">
-          <DialogTitle className="text-xl font-bold text-[#3C3C3C]">
-            選擇訓練模板 🦆
+          <DialogTitle className="text-xl font-bold text-[#2D3648]">
+            {t("templates.selectTemplate")}
           </DialogTitle>
         </DialogHeader>
 
@@ -96,7 +98,7 @@ export default function TemplateSelector({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#AFAFAF]" />
             <Input
-              placeholder="搜尋模板..."
+            placeholder={t("templates.searchTemplates")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 border-2 border-[#E5E5E5] focus:border-[#58CC02]"
@@ -107,19 +109,19 @@ export default function TemplateSelector({
         {/* Templates Grid */}
         <div className="flex-1 overflow-y-auto px-4 pb-4">
           {loading ? (
-            <div className="text-center py-12 text-[#AFAFAF]">載入中...</div>
+            <div className="text-center py-12 text-[#AFAFAF]">{t("common.loading")}</div>
           ) : filteredTemplates.length === 0 && !searchQuery ? (
             <div className="text-center py-12">
               <DuckMascot size="xl" className="mx-auto mb-4 opacity-50" />
-              <p className="text-[#AFAFAF] font-medium">還沒有模板</p>
+              <p className="text-[#AFAFAF] font-medium">{t("templates.noTemplates")}</p>
               <p className="text-sm text-[#AFAFAF] mt-1">
-                完成一次訓練後可以儲存為模板！
+                {t("templates.noTemplatesHint")}
               </p>
             </div>
           ) : filteredTemplates.length === 0 ? (
             <div className="text-center py-12">
               <Dumbbell className="h-12 w-12 mx-auto text-[#E5E5E5] mb-2" />
-              <p className="text-[#AFAFAF]">找不到「{searchQuery}」</p>
+              <p className="text-[#AFAFAF]">{t("templates.noResults", { query: searchQuery })}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
@@ -138,7 +140,7 @@ export default function TemplateSelector({
             onClick={handleStartEmpty}
           >
             <Plus className="h-5 w-5 mr-2" />
-            開始空白訓練
+            {t("templates.startEmpty")}
           </Button>
         </div>
       </DialogContent>

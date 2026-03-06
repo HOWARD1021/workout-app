@@ -74,6 +74,7 @@ export const workoutTemplates = sqliteTable("workout_templates", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").references(() => user.id),
   name: text("name").notNull(),
   description: text("description"),
   muscleGroup: text("muscle_group"),
@@ -106,6 +107,7 @@ export const workouts = sqliteTable("workouts", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").references(() => user.id),
   templateId: text("template_id").references(() => workoutTemplates.id, {
     onDelete: "set null",
   }),
@@ -138,6 +140,77 @@ export const workoutLogs = sqliteTable("workout_logs", {
   createdAt: text("created_at").default(sql`(datetime('now'))`),
 });
 
+// achievements 成就定義
+export const achievements = sqliteTable("achievements", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  nameEn: text("name_en").notNull(),
+  description: text("description").notNull(),
+  descriptionEn: text("description_en").notNull(),
+  icon: text("icon").notNull(),
+  category: text("category", {
+    enum: ["first", "streak", "count", "volume", "muscle", "pr"],
+  }).notNull(),
+  conditionType: text("condition_type").notNull(),
+  conditionValue: integer("condition_value").notNull(),
+});
+
+// user_achievements 用戶已解鎖成就
+export const userAchievements = sqliteTable("user_achievements", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  achievementId: text("achievement_id")
+    .notNull()
+    .references(() => achievements.id),
+  unlockedAt: text("unlocked_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+// friendships 好友關係
+export const friendships = sqliteTable("friendships", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  requesterId: text("requester_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  addresseeId: text("addressee_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  status: text("status", {
+    enum: ["pending", "accepted", "declined"],
+  })
+    .notNull()
+    .default("pending"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+// activity_feed 動態
+export const activityFeed = sqliteTable("activity_feed", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  type: text("type", {
+    enum: ["workout", "achievement", "streak"],
+  }).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  metadata: text("metadata"), // JSON string for extra data
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
 // Type exports
 export type Exercise = typeof exercises.$inferSelect;
 export type NewExercise = typeof exercises.$inferInsert;
@@ -148,3 +221,7 @@ export type NewWorkoutLog = typeof workoutLogs.$inferInsert;
 export type WorkoutTemplate = typeof workoutTemplates.$inferSelect;
 export type NewWorkoutTemplate = typeof workoutTemplates.$inferInsert;
 export type WorkoutTemplateExercise = typeof workoutTemplateExercises.$inferSelect;
+export type Achievement = typeof achievements.$inferSelect;
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type Friendship = typeof friendships.$inferSelect;
+export type ActivityFeedItem = typeof activityFeed.$inferSelect;

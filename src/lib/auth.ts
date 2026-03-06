@@ -27,3 +27,24 @@ export function getAuth() {
 
 // Type helper for session inference
 export type Auth = ReturnType<typeof getAuth>;
+
+// Helper to get current user from request
+export async function getCurrentUser(request: Request) {
+  const auth = getAuth();
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
+  return session?.user || null;
+}
+
+// Helper to require authenticated user (throws 401 if not logged in)
+export async function requireUser(request: Request) {
+  const user = await getCurrentUser(request);
+  if (!user) {
+    throw new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  return user;
+}

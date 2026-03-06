@@ -1,18 +1,35 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getDb, workoutTemplates, workoutTemplateExercises, exercises } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { eq, and, or, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
-
-
+import { getCurrentUser } from "@/lib/auth";
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser(request);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const { env } = getCloudflareContext();
     const db = getDb(env.DB);
+
+    // Verify template belongs to user OR is a public template (user_id IS NULL)
+    const [template] = await db
+      .select()
+      .from(workoutTemplates)
+      .where(and(
+        eq(workoutTemplates.id, id),
+        or(eq(workoutTemplates.userId, user.id), isNull(workoutTemplates.userId))
+      ));
+    
+    if (!template) {
+      return NextResponse.json({ error: "Template not found" }, { status: 404 });
+    }
 
     // Get template exercises with exercise details
     const templateExercises = await db
@@ -47,6 +64,11 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser(request);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const { env } = getCloudflareContext();
     const db = getDb(env.DB);
@@ -56,7 +78,7 @@ export async function PATCH(
       is_favorite?: boolean;
     };
 
-    // Update template
+    // Update template (only if belongs to user)
     const updates: Record<string, unknown> = {};
     if (body.use_count !== undefined) updates.useCount = body.use_count;
     if (body.last_used_at !== undefined) updates.lastUsedAt = body.last_used_at;
@@ -66,7 +88,7 @@ export async function PATCH(
       await db
         .update(workoutTemplates)
         .set(updates)
-        .where(eq(workoutTemplates.id, id));
+        .where(and(eq(workoutTemplates.id, id), eq(workoutTemplates.userId, user.id)));
     }
 
     return NextResponse.json({ success: true });
@@ -81,15 +103,20 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser(request);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const { env } = getCloudflareContext();
     const db = getDb(env.DB);
 
-    // Soft delete
+    // Soft delete (only if belongs to user)
     await db
       .update(workoutTemplates)
       .set({ deletedAt: new Date().toISOString() })
-      .where(eq(workoutTemplates.id, id));
+      .where(and(eq(workoutTemplates.id, id), eq(workoutTemplates.userId, user.id)));
 
     return NextResponse.json({ success: true });
   } catch (error) {

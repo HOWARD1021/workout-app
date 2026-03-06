@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import DuckMascot from "./DuckMascot";
+import { useTranslation } from "@/lib/i18n";
 
 interface InactivityReminderProps {
   daysSinceLastWorkout: number;
@@ -15,6 +16,8 @@ export default function InactivityReminder({
   onStartWorkout,
   onDismiss,
 }: InactivityReminderProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <Card className="bg-white rounded-3xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden">
@@ -27,13 +30,9 @@ export default function InactivityReminder({
           </div>
 
           {/* Message */}
-          <h2 className="text-2xl font-bold text-[#3C3C3C] mb-2">嘿！</h2>
+          <h2 className="text-2xl font-bold text-[#2D3648] mb-2">{t("reminder.title")}</h2>
           <p className="text-lg text-[#AFAFAF] mb-6">
-            你已經{" "}
-            <span className="font-bold text-[#FF4B4B]">
-              {daysSinceLastWorkout}
-            </span>{" "}
-            天沒來運動了！
+            {t("reminder.message", { days: daysSinceLastWorkout })}
           </p>
 
           {/* CTA Button */}
@@ -42,16 +41,16 @@ export default function InactivityReminder({
             className="w-full bg-[#58CC02] hover:bg-[#46A302] text-white text-lg py-6 rounded-2xl font-bold mb-3"
             onClick={onStartWorkout}
           >
-            現在開始運動 💪
+            {t("reminder.startNow")}
           </Button>
 
           {/* Dismiss Button */}
           <Button
             variant="ghost"
-            className="w-full text-[#AFAFAF] hover:text-[#3C3C3C]"
+            className="w-full text-[#AFAFAF] hover:text-[#2D3648]"
             onClick={onDismiss}
           >
-            稍後提醒
+            {t("reminder.later")}
           </Button>
         </CardContent>
       </Card>

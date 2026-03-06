@@ -147,6 +147,99 @@ export interface TemplateExercise {
   } | null;
 }
 
+// Analytics
+export interface MuscleGroupData {
+  muscleGroup: string;
+  totalVolume: number;
+  totalSets: number;
+}
+
+export interface TrendsData {
+  weeks: string[];
+  weeklyFrequency: Array<{ week: string; count: number }>;
+  muscleGroupTrends: Array<{
+    muscleGroup: string;
+    weeks: Array<{ week: string; volume: number }>;
+  }>;
+  exerciseTrends: Array<{
+    exerciseId: string;
+    exerciseName: string;
+    muscleGroup: string;
+    weeks: Array<{ week: string; maxWeight: number; volume: number }>;
+  }>;
+}
+
+export const analyticsApi = {
+  muscleGroups: () => fetchApi<MuscleGroupData[]>("/analytics/muscle-groups"),
+  trends: () => fetchApi<TrendsData>("/analytics/trends"),
+};
+
+// Achievements
+export interface AchievementWithStatus {
+  id: string;
+  name: string;
+  nameEn: string;
+  description: string;
+  descriptionEn: string;
+  icon: string;
+  category: string;
+  conditionType: string;
+  conditionValue: number;
+  unlocked: boolean;
+  unlockedAt: string | null;
+}
+
+export const achievementsApi = {
+  list: () => fetchApi<AchievementWithStatus[]>("/achievements"),
+  check: () =>
+    fetchApi<{ newUnlocks: AchievementWithStatus[] }>("/achievements", {
+      method: "POST",
+    }),
+};
+
+// Friends
+export interface FriendData {
+  id: string;
+  friendId: string;
+  friendName: string;
+  friendImage: string | null;
+  status: "pending" | "accepted" | "declined";
+  isIncoming: boolean;
+  createdAt: string;
+}
+
+export const friendsApi = {
+  list: () => fetchApi<FriendData[]>("/friends"),
+  invite: (email: string) =>
+    fetchApi("/friends", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
+  respond: (id: string, status: "accepted" | "declined") =>
+    fetchApi(`/friends/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
+};
+
+// Activity Feed
+export interface FeedItem {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  description: string | null;
+  metadata: string | null;
+  createdAt: string;
+  userName: string;
+  userImage: string | null;
+  isOwn: boolean;
+}
+
+export const feedApi = {
+  list: () => fetchApi<FeedItem[]>("/feed"),
+};
+
 // Exercise Image Generation
 export interface ExerciseImageResult {
   exerciseName: string;

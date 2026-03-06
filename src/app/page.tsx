@@ -5,9 +5,11 @@ import GoogleSignInButton from "@/components/GoogleSignInButton";
 import UserMenu from "@/components/UserMenu";
 import DuckMascot from "@/components/DuckMascot";
 import { useSession } from "@/lib/auth-client";
+import { useTranslation } from "@/lib/i18n";
 
 export default function Home() {
   const { data: session, isPending } = useSession();
+  const { t } = useTranslation();
 
   if (isPending) {
     return (
@@ -28,10 +30,10 @@ export default function Home() {
         {/* Welcome text with staggered fade-in */}
         <div className="flex flex-col items-center gap-2">
           <h1 className="text-2xl font-bold text-gray-800 animate-fade-in-up-delay-1">
-            Workout App
+            {t("home.title")}
           </h1>
           <p className="text-sm text-gray-500 text-center animate-fade-in-up-delay-2">
-            請使用 Google 帳號登入以開始記錄訓練 💪
+            {t("common.loginPrompt")}
           </p>
         </div>
 

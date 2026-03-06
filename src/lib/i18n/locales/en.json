@@ -8,7 +8,13 @@
     "edit": "Edit",
     "add": "Add",
     "loading": "Loading...",
-    "search": "Search"
+    "search": "Search",
+    "confirm": "Confirm",
+    "exercises": "exercises",
+    "sets": "sets",
+    "times": "times",
+    "used": "used",
+    "loginPrompt": "Sign in with Google to start tracking workouts 💪"
   },
   "home": {
     "title": "Workout",
@@ -18,12 +24,15 @@
     "statistics": "Statistics",
     "workouts": "Workouts",
     "totalKg": "Total kg",
-    "progress": "Progress"
+    "progress": "Progress",
+    "timeToLift": "Time to lift! 💪",
+    "progressWorkouts": "Progress: {count} workouts"
   },
   "workout": {
     "freeWorkout": "Free Workout",
     "defaultRestTime": "Default Rest Time",
     "restTime": "Rest Time",
+    "restTimer": "Rest Timer",
     "set": "Set",
     "previous": "Previous",
     "kg": "kg",
@@ -32,7 +41,11 @@
     "addExercise": "Add Exercise",
     "selectExercise": "Select Exercise",
     "searchExercises": "Search exercises...",
-    "enterWeightAndReps": "Please enter weight and reps first!"
+    "enterWeightAndReps": "Please enter weight and reps first!",
+    "skip": "Skip",
+    "active": "Active",
+    "rest": "Rest",
+    "goBack": "← Back"
   },
   "complete": {
     "great": "Great job! 💪",
@@ -50,26 +63,70 @@
   },
   "templates": {
     "title": "Workout Templates",
-    "create": "Create Template",
-    "selectTemplate": "Select Template",
-    "startEmpty": "Empty Workout",
+    "create": "New Template",
+    "selectTemplate": "Choose a Template 🦆",
+    "startEmpty": "Start Empty Workout",
     "recentlyUsed": "Recently Used",
-    "noTemplates": "No templates yet"
+    "noTemplates": "No templates yet",
+    "noTemplatesHint": "Save a workout as a template after completing it!",
+    "searchTemplates": "Search templates...",
+    "noResults": "No results for \"{query}\"",
+    "useTemplate": "Start with this template",
+    "createFirst": "Create your first template",
+    "noTemplatesYet": "No workout templates yet",
+    "deleteConfirm": "Delete this template?",
+    "deleteWarning": "This action cannot be undone. The template will be permanently deleted.",
+    "showExercises": "Show exercises",
+    "hideExercises": "Hide exercises"
   },
   "exercises": {
     "title": "Exercise Library",
-    "noExercises": "No exercises yet"
+    "noExercises": "No exercises yet",
+    "addCustom": "Add Custom Exercise (Coming Soon)",
+    "viewExercise": "View exercise"
   },
   "analytics": {
     "title": "Workout Statistics",
     "totalWorkouts": "Total Workouts",
     "totalVolume": "Total Volume",
-    "streak": "Streak"
+    "totalSets": "Total Sets",
+    "streak": "Streak",
+    "recentWorkouts": "Recent Workouts",
+    "noWorkoutsYet": "No workouts yet. Start your first workout!",
+    "muscleGroups": "Muscle Groups",
+    "weeklyFrequency": "Weekly Frequency",
+    "trends": "Trends",
+    "thisWeek": "This Week",
+    "lastWeek": "Last Week",
+    "volume": "Volume",
+    "maxWeight": "Max Weight"
+  },
+  "friends": {
+    "title": "Friends",
+    "friendList": "Friends",
+    "activityFeed": "Activity",
+    "addFriend": "Add Friend",
+    "emailPlaceholder": "Enter friend's email",
+    "send": "Send",
+    "inviteFailed": "Invite failed. Please check the email.",
+    "pendingRequests": "Pending Requests",
+    "noFriends": "No friends yet",
+    "noFriendsHint": "Tap + to add friends",
+    "connected": "Connected",
+    "pending": "Pending",
+    "noActivity": "No activity yet",
+    "you": "You",
+    "shareThreads": "Share on Threads"
+  },
+  "achievements": {
+    "title": "Achievements",
+    "unlocked": "Achievements Unlocked",
+    "noAchievements": "No achievements in this category"
   },
   "reminder": {
-    "title": "Time to workout!",
-    "message": "It's been {days} days since your last workout",
-    "startNow": "Start Workout",
+    "title": "Hey!",
+    "message": "It's been {days} days since your last workout!",
+    "startNow": "Start Working Out 💪",
     "later": "Remind Later"
   }
 }

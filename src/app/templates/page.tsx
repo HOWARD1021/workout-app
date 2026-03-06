@@ -26,6 +26,7 @@ import {
   ChevronRight,
   Loader2,
 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 interface Template {
   id: string;
@@ -90,6 +91,7 @@ export default function TemplatesPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [expandedTemplate, setExpandedTemplate] = useState<string | null>(null);
   const [templateExercises, setTemplateExercises] = useState<Record<string, TemplateExercise[]>>({});
+  const { t } = useTranslation();
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -263,11 +265,11 @@ export default function TemplatesPage() {
                 <Home className="w-5 h-5" />
               </Button>
             </Link>
-            <h1 className="font-semibold">訓練模板</h1>
+            <h1 className="font-semibold">{t("templates.title")}</h1>
           </div>
           <Button onClick={openNewTemplate}>
             <Plus className="w-4 h-4 mr-1" />
-            新增模板
+            {t("templates.create")}
           </Button>
         </div>
       </header>
@@ -278,10 +280,10 @@ export default function TemplatesPage() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Dumbbell className="w-12 h-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">還沒有任何訓練模板</p>
+              <p className="text-muted-foreground mb-4">{t("templates.noTemplatesYet")}</p>
               <Button onClick={openNewTemplate}>
                 <Plus className="w-4 h-4 mr-1" />
-                建立第一個模板
+                {t("templates.createFirst")}
               </Button>
             </CardContent>
           </Card>
@@ -366,7 +368,7 @@ export default function TemplatesPage() {
                         expandedTemplate === template.id ? "rotate-90" : ""
                       }`}
                     />
-                    {expandedTemplate === template.id ? "收起動作" : "查看動作"}
+                    {expandedTemplate === template.id ? t("templates.hideExercises") : t("templates.showExercises")}
                   </button>
 
                   {expandedTemplate === template.id && templateExercises[template.id] && (
@@ -394,7 +396,7 @@ export default function TemplatesPage() {
                     <Link href={`/log?template=${template.id}`}>
                       <Button className="w-full">
                         <Dumbbell className="w-4 h-4 mr-2" />
-                        使用此模板開始訓練
+                        {t("templates.useTemplate")}
                       </Button>
                     </Link>
                   </div>
@@ -421,18 +423,18 @@ export default function TemplatesPage() {
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>確定要刪除此模板？</AlertDialogTitle>
+            <AlertDialogTitle>{t("templates.deleteConfirm")}</AlertDialogTitle>
             <AlertDialogDescription>
-              此操作無法復原。模板將被永久刪除。
+              {t("templates.deleteWarning")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
             >
-              刪除
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

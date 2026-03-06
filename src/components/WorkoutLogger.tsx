@@ -44,6 +44,7 @@ import { useWorkout, type ExerciseBlock } from "@/contexts/WorkoutContext";
 import { useRouter } from "next/navigation";
 import DuckMascot from "./DuckMascot";
 import ExerciseImageDialog from "./ExerciseImageDialog";
+import RestTimerDialog from "./RestTimerDialog";
 
 // Sortable Exercise Card Component
 function SortableExerciseCard({
@@ -87,7 +88,7 @@ function SortableExerciseCard({
       className={`bg-white border-2 border-[#E5E5E5] mb-4 ${isDragging ? "shadow-lg" : ""}`}
     >
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-[#3C3C3C]">
+        <CardTitle className="flex items-center gap-2 text-[#2D3648]">
           <button
             {...attributes}
             {...listeners}
@@ -139,7 +140,7 @@ function SortableExerciseCard({
             )}
             <div
               className={`font-bold ${
-                set.completed ? "text-[#58CC02]" : "text-[#3C3C3C]"
+                set.completed ? "text-[#58CC02]" : "text-[#2D3648]"
               }`}
             >
               {set.set_order}
@@ -328,7 +329,7 @@ export default function WorkoutLogger() {
               <ArrowLeft className="h-4 w-4 mr-1" />
               Back
             </Button>
-            <div className="flex items-center gap-2 text-[#3C3C3C]">
+            <div className="flex items-center gap-2 text-[#2D3648]">
               <Clock className="h-4 w-4" />
               <span className="font-mono text-lg">{formatTime(elapsedTime)}</span>
             </div>
@@ -354,7 +355,7 @@ export default function WorkoutLogger() {
                 animate={false} 
               />
               <div>
-                <h2 className="text-xl font-bold text-[#3C3C3C]">
+                <h2 className="text-xl font-bold text-[#2D3648]">
                   {templateInfo ? templateInfo.name : "自由訓練"}
                 </h2>
                 <p className="text-[#AFAFAF] text-sm">
@@ -374,7 +375,7 @@ export default function WorkoutLogger() {
         <Card className="bg-white border-2 border-[#E5E5E5] mb-4">
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[#3C3C3C]">
+              <div className="flex items-center gap-2 text-[#2D3648]">
                 <Timer className="h-4 w-4" />
                 <span className="text-sm font-medium">預設休息時間</span>
               </div>
@@ -387,7 +388,7 @@ export default function WorkoutLogger() {
                     className={`px-2 py-1 text-xs ${
                       defaultRestTime === time
                         ? "bg-[#58CC02] text-white hover:bg-[#46A302]"
-                        : "text-[#AFAFAF] hover:text-[#3C3C3C]"
+                        : "text-[#AFAFAF] hover:text-[#2D3648]"
                     }`}
                     onClick={() => setDefaultRestTime(time)}
                   >
@@ -435,52 +436,18 @@ export default function WorkoutLogger() {
         </Button>
       </div>
 
-      {/* Floating Rest Timer */}
+      {/* Rest Timer */}
       {isRestTimerRunning && restTimer !== null && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-          {isRestTimerExpanded ? (
-            // Expanded view
-            <div className="bg-[#1CB0F6] text-white rounded-2xl shadow-lg px-5 py-4 min-w-[280px]">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Timer className="h-6 w-6" />
-                  <div>
-                    <p className="text-sm opacity-80">休息時間</p>
-                    <p className="text-3xl font-bold font-mono">
-                      {Math.floor(restTimer / 60)}:{(restTimer % 60).toString().padStart(2, "0")}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-white hover:bg-white/20 px-2"
-                    onClick={() => addRestTime(30)}
-                  >
-                    +30s
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-white hover:bg-white/20 h-8 w-8"
-                    onClick={() => setIsRestTimerExpanded(false)}
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-white hover:bg-white/20 h-8 w-8"
-                    onClick={stopRestTimer}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            // Minimized view - small pill
+        isRestTimerExpanded ? (
+          <RestTimerDialog
+            restTimer={restTimer}
+            defaultRestTime={defaultRestTime}
+            onAddTime={(seconds) => addRestTime(seconds)}
+            onSkip={stopRestTimer}
+            onMinimize={() => setIsRestTimerExpanded(false)}
+          />
+        ) : (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
             <button
               onClick={() => setIsRestTimerExpanded(true)}
               className="bg-[#1CB0F6] text-white rounded-full shadow-lg px-4 py-2 flex items-center gap-2 hover:bg-[#0A9AD6] transition-colors"
@@ -490,8 +457,8 @@ export default function WorkoutLogger() {
                 {Math.floor(restTimer / 60)}:{(restTimer % 60).toString().padStart(2, "0")}
               </span>
             </button>
-          )}
-        </div>
+          </div>
+        )
       )}
 
       {/* Exercise Image Dialog */}
@@ -528,7 +495,7 @@ export default function WorkoutLogger() {
                     <Button
                       key={exercise.id}
                       variant="ghost"
-                      className="w-full justify-start text-[#3C3C3C] hover:bg-[#F7F7F7]"
+                      className="w-full justify-start text-[#2D3648] hover:bg-[#F7F7F7]"
                       onClick={() => handleAddExercise(exercise)}
                     >
                       <Dumbbell className="h-4 w-4 mr-2 text-[#AFAFAF]" />
