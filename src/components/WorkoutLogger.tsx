@@ -471,40 +471,61 @@ export default function WorkoutLogger() {
 
       {/* Exercise Picker Dialog */}
       <Dialog open={showExercisePicker} onOpenChange={setShowExercisePicker}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="p-4 pb-0">
             <DialogTitle>Select Exercise</DialogTitle>
           </DialogHeader>
 
-          <Input
-            placeholder="Search exercises..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="mb-4"
-          />
+          <div className="px-4 py-2">
+            <Input
+              placeholder="Search exercises..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="border-2 border-[#E5E5E5] focus:border-[#58CC02]"
+            />
+          </div>
 
-          <div className="space-y-4">
-            {Object.entries(groupedExercises).map(([group, groupExercises]) => (
-              <div key={group}>
-                <h3 className="text-sm font-medium text-[#AFAFAF] mb-2 flex items-center">
-                  <ChevronDown className="h-4 w-4 mr-1" />
-                  {group}
-                </h3>
-                <div className="space-y-1">
-                  {groupExercises.map((exercise) => (
-                    <Button
-                      key={exercise.id}
-                      variant="ghost"
-                      className="w-full justify-start text-[#2D3648] hover:bg-[#F7F7F7]"
-                      onClick={() => handleAddExercise(exercise)}
-                    >
-                      <Dumbbell className="h-4 w-4 mr-2 text-[#AFAFAF]" />
-                      {exercise.name}
-                    </Button>
-                  ))}
-                </div>
-              </div>
+          {/* Muscle Group Filter Tabs */}
+          <div className="px-4 pb-2 flex gap-1.5 overflow-x-auto scrollbar-hide">
+            {["All", "Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Full Body"].map((mg) => (
+              <button
+                key={mg}
+                onClick={() => setSearchQuery(mg === "All" ? "" : mg)}
+                className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                  (mg === "All" && !searchQuery) || searchQuery === mg
+                    ? "bg-[#58CC02] text-white"
+                    : "bg-gray-100 text-[#2D3648] hover:bg-gray-200"
+                }`}
+              >
+                {mg}
+              </button>
             ))}
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-4 pb-4">
+            <div className="space-y-4">
+              {Object.entries(groupedExercises).map(([group, groupExercises]) => (
+                <div key={group}>
+                  <h3 className="text-sm font-medium text-[#AFAFAF] mb-2 flex items-center">
+                    <ChevronDown className="h-4 w-4 mr-1" />
+                    {group}
+                  </h3>
+                  <div className="space-y-1">
+                    {groupExercises.map((exercise) => (
+                      <Button
+                        key={exercise.id}
+                        variant="ghost"
+                        className="w-full justify-start text-[#2D3648] hover:bg-[#F7F7F7]"
+                        onClick={() => handleAddExercise(exercise)}
+                      >
+                        <Dumbbell className="h-4 w-4 mr-2 text-[#AFAFAF]" />
+                        {exercise.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

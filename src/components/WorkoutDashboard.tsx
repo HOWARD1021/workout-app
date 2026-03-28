@@ -1,14 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Flame, Heart, ChevronRight, Trophy, Target, LayoutTemplate, Award, Users } from "lucide-react";
+import { Flame, Heart, ChevronRight, Trophy, Target, LayoutTemplate, Award, Users, Wallet } from "lucide-react";
 import { workoutsApi } from "@/lib/api";
 import DuckMascot from "./DuckMascot";
 import TemplateSelector from "./TemplateSelector";
 import InactivityReminder from "./InactivityReminder";
 import { useRouter } from "next/navigation";
 import { useWorkout } from "@/contexts/WorkoutContext";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, useI18n } from "@/lib/i18n";
+
+const GOAL_KEY = "workout-weekly-goal";
+function loadGoal(): number {
+  try {
+    const v = localStorage.getItem(GOAL_KEY);
+    return v ? parseInt(v, 10) : 4;
+  } catch { return 4; }
+}
+function saveGoal(v: number) {
+  try { localStorage.setItem(GOAL_KEY, String(v)); } catch {}
+}
 
 interface Stats {
   total_sessions: number;
@@ -16,16 +27,32 @@ interface Stats {
   streak_days: number;
   hearts: number;
   daysSinceLastWorkout: number;
+  thisWeekWorkouts: number;
 }
 
 export default function WorkoutDashboard() {
   const router = useRouter();
   const { startWorkout } = useWorkout();
   const { t } = useTranslation();
+  const { locale } = useI18n();
+  const isZh = locale === "zh-TW";
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [showInactivityReminder, setShowInactivityReminder] = useState(false);
+  const [weeklyGoal, setWeeklyGoalState] = useState(4);
+  const [showGoalPicker, setShowGoalPicker] = useState(false);
+
+  // Load weekly goal from localStorage
+  useEffect(() => {
+    setWeeklyGoalState(loadGoal());
+  }, []);
+
+  const setWeeklyGoal = (v: number) => {
+    setWeeklyGoalState(v);
+    saveGoal(v);
+    setShowGoalPicker(false);
+  };
 
   useEffect(() => {
     fetchData();
@@ -46,10 +73,10 @@ export default function WorkoutDashboard() {
       // Calculate streak and days since last workout
       let streakDays = 0;
       let daysSinceLastWorkout = 0;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
       if (allWorkouts.length > 0) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
 
         const workoutDates = new Set(
           allWorkouts.map(
@@ -77,12 +104,23 @@ export default function WorkoutDashboard() {
         );
       }
 
+      // Calculate this week's workouts
+      const weekStart = new Date(today);
+      const dayOfWeek = weekStart.getDay();
+      weekStart.setDate(weekStart.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+      const thisWeekWorkouts = allWorkouts.filter((w) => {
+        const d = new Date(w.startedAt);
+        d.setHours(0, 0, 0, 0);
+        return d >= weekStart;
+      }).length;
+
       setStats({
         total_sessions: allWorkouts.length,
         total_volume_kg: Math.round(totalVolume),
         streak_days: streakDays,
         hearts: 70,
         daysSinceLastWorkout,
+        thisWeekWorkouts,
       });
 
       // Show inactivity reminder if > 2 days since last workout
@@ -96,9 +134,9 @@ export default function WorkoutDashboard() {
     }
   };
 
-  const weeklyGoal = 5;
-  const thisWeekWorkouts = stats ? stats.total_sessions % weeklyGoal : 0;
-  const progressPercent = (thisWeekWorkouts / weeklyGoal) * 100;
+  const thisWeekWorkouts = stats?.thisWeekWorkouts || 0;
+  const progressPercent = Math.min(100, (thisWeekWorkouts / weeklyGoal) * 100);
+  const goalReached = thisWeekWorkouts >= weeklyGoal;
 
   if (loading) {
     return (
@@ -132,17 +170,44 @@ export default function WorkoutDashboard() {
         </div>
       </div>
 
-      {/* Progress Bar */}
+      {/* Weekly Goal Progress */}
       <div className="px-4 py-3 bg-white">
+        <div className="flex items-center justify-between mb-1">
+          <button
+            onClick={() => setShowGoalPicker(!showGoalPicker)}
+            className="text-xs text-[#AFAFAF] font-medium hover:text-[#58CC02] transition-colors"
+          >
+            {isZh ? `週目標 ${thisWeekWorkouts}/${weeklyGoal}` : `Week ${thisWeekWorkouts}/${weeklyGoal}`} ✏️
+          </button>
+          {goalReached && <span className="text-xs font-bold text-[#58CC02]">{isZh ? "✅ 達標！" : "✅ Done!"}</span>}
+        </div>
         <div className="flex items-center gap-3">
           <div className="flex-1 h-4 bg-gray-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-[#58CC02] rounded-full transition-all duration-500"
+              className={`h-full rounded-full transition-all duration-500 ${goalReached ? "bg-[#FFD700]" : "bg-[#58CC02]"}`}
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-          <span className="text-2xl">⭐</span>
+          <span className="text-2xl">{goalReached ? "🏆" : "⭐"}</span>
         </div>
+        {/* Goal Picker */}
+        {showGoalPicker && (
+          <div className="flex gap-2 mt-2 justify-center">
+            {[2, 3, 4, 5, 6, 7].map((n) => (
+              <button
+                key={n}
+                onClick={() => setWeeklyGoal(n)}
+                className={`w-9 h-9 rounded-full text-sm font-bold transition-all ${
+                  weeklyGoal === n
+                    ? "bg-[#58CC02] text-white"
+                    : "bg-gray-100 text-[#2D3648] hover:bg-gray-200"
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Main Content */}
@@ -229,7 +294,7 @@ export default function WorkoutDashboard() {
             {t("home.statistics")}
           </button>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <button
             onClick={() => router.push("/achievements")}
             className="py-4 rounded-2xl border-2 border-[#FFD700] text-[#DAA520] font-bold text-sm flex items-center justify-center gap-1.5 hover:bg-yellow-50 active:scale-[0.98] transition-all"
@@ -243,6 +308,13 @@ export default function WorkoutDashboard() {
           >
             <Users className="w-4 h-4" />
             {t("friends.title")}
+          </button>
+          <button
+            onClick={() => router.push("/membership")}
+            className="py-4 rounded-2xl border-2 border-[#58CC02] text-[#58CC02] font-bold text-sm flex items-center justify-center gap-1.5 hover:bg-green-50 active:scale-[0.98] transition-all"
+          >
+            <Wallet className="w-4 h-4" />
+            {isZh ? "會員" : "Cost"}
           </button>
         </div>
       </div>

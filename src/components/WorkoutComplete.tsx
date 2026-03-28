@@ -14,9 +14,11 @@ import { achievementsApi, type AchievementWithStatus } from "@/lib/api";
 interface WorkoutCompleteProps {
   summary: {
     exerciseCount: number;
+    totalSets: number;
     totalVolume: number;
     duration: number;
-    exercises: Array<{ name: string; maxWeight: number }>;
+    exercises: Array<{ name: string; maxWeight: number; totalSets: number; totalVolume: number }>;
+    muscleGroups: Array<{ name: string; volume: number; color: string }>;
   };
   onDone?: () => void;
 }
@@ -110,51 +112,84 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
       <Card className="w-full max-w-sm bg-white/95 backdrop-blur border-0 shadow-xl">
         <CardContent className="p-6">
           {/* Main Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-1">
-                <Dumbbell className="h-5 w-5 text-[#58CC02]" />
-              </div>
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="bg-[#F7F7F7] rounded-xl p-3 text-center">
+              <Dumbbell className="h-5 w-5 text-[#58CC02] mx-auto mb-1" />
               <p className="text-2xl font-bold text-[#2D3648]">
-                {summary.exerciseCount}
+                {summary.totalSets}
               </p>
-              <p className="text-xs text-[#AFAFAF]">{t("complete.exercises")}</p>
+              <p className="text-xs text-[#AFAFAF]">{isZh ? "組" : "Sets"}</p>
             </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-1">
-                <TrendingUp className="h-5 w-5 text-[#1CB0F6]" />
-              </div>
+            <div className="bg-[#F7F7F7] rounded-xl p-3 text-center">
+              <TrendingUp className="h-5 w-5 text-[#1CB0F6] mx-auto mb-1" />
               <p className="text-2xl font-bold text-[#2D3648]">
                 {summary.totalVolume.toLocaleString()}
               </p>
-              <p className="text-xs text-[#AFAFAF]">{t("complete.totalVolume")}</p>
+              <p className="text-xs text-[#AFAFAF]">{isZh ? "總容量 kg" : "Volume kg"}</p>
             </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-1">
-                <Clock className="h-5 w-5 text-[#FF8C42]" />
-              </div>
+            <div className="bg-[#F7F7F7] rounded-xl p-3 text-center">
+              <Clock className="h-5 w-5 text-[#FF8C42] mx-auto mb-1" />
               <p className="text-2xl font-bold text-[#2D3648]">
                 {formatDuration(summary.duration)}
               </p>
               <p className="text-xs text-[#AFAFAF]">{t("complete.duration")}</p>
             </div>
+            <div className="bg-[#F7F7F7] rounded-xl p-3 text-center">
+              <span className="text-lg block mb-1">⚡</span>
+              <p className="text-2xl font-bold text-[#2D3648]">
+                {summary.duration > 0 ? Math.round(summary.totalVolume / (summary.duration / 60)) : 0}
+              </p>
+              <p className="text-xs text-[#AFAFAF]">{isZh ? "kg/分鐘" : "kg/min"}</p>
+            </div>
           </div>
+
+          {/* Muscle Group Breakdown */}
+          {summary.muscleGroups.length > 0 && (
+            <div className="mb-4">
+              <p className="text-xs font-medium text-[#AFAFAF] mb-2">{isZh ? "肌群分布" : "Muscle Groups"}</p>
+              <div className="flex rounded-full overflow-hidden h-3">
+                {summary.muscleGroups.map((mg, i) => {
+                  const totalVol = summary.muscleGroups.reduce((s, m) => s + m.volume, 0);
+                  const pct = totalVol > 0 ? (mg.volume / totalVol) * 100 : 0;
+                  return (
+                    <div
+                      key={i}
+                      style={{ width: `${pct}%`, backgroundColor: mg.color }}
+                      className="transition-all"
+                      title={`${mg.name}: ${mg.volume} kg`}
+                    />
+                  );
+                })}
+              </div>
+              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
+                {summary.muscleGroups.map((mg, i) => (
+                  <span key={i} className="text-[10px] text-[#AFAFAF] flex items-center gap-1">
+                    <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: mg.color }} />
+                    {mg.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Exercise List */}
           {summary.exercises.length > 0 && (
-            <div className="border-t border-[#E5E5E5] pt-4">
-              <h3 className="text-sm font-medium text-[#AFAFAF] mb-3 flex items-center gap-1">
-                <Trophy className="h-4 w-4" />
+            <div className="border-t border-[#E5E5E5] pt-3">
+              <h3 className="text-xs font-medium text-[#AFAFAF] mb-2 flex items-center gap-1">
+                <Trophy className="h-3.5 w-3.5" />
                 {t("complete.todayBest")}
               </h3>
-              <div className="space-y-2">
-                {summary.exercises.slice(0, 3).map((ex, i) => (
+              <div className="space-y-1.5">
+                {summary.exercises.map((ex, i) => (
                   <div
                     key={i}
                     className="flex justify-between items-center text-sm"
                   >
-                    <span className="text-[#2D3648]">{ex.name}</span>
-                    <span className="font-bold text-[#58CC02]">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-[#2D3648] truncate">{ex.name}</span>
+                      <span className="text-[10px] text-[#AFAFAF] shrink-0">{ex.totalSets}{isZh ? "組" : "s"}</span>
+                    </div>
+                    <span className="font-bold text-[#58CC02] shrink-0 ml-2">
                       {ex.maxWeight} kg
                     </span>
                   </div>

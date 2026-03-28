@@ -65,17 +65,12 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     if (typeof window === "undefined") return "zh-TW";
     return getStoredLocale();
   });
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  // Hydration effect - only sets isHydrated flag
+  // Sync locale from storage after hydration
   useEffect(() => {
-    // Re-read from storage to ensure consistency after hydration
     const storedLocale = getStoredLocale();
     if (storedLocale !== locale) {
-      // Use setTimeout to avoid the lint warning about setState in effect
-      setTimeout(() => setLocaleState(storedLocale), 0);
+      setLocaleState(storedLocale);
     }
-    setIsHydrated(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -100,11 +95,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     [locale]
   );
 
-  // Prevent hydration mismatch
-  if (!isHydrated) {
-    return null;
-  }
-
+  // During SSR/hydration, use default locale but still render children
+  // to avoid unmounting the entire tree (which resets WorkoutProvider state)
   return (
     <I18nContext.Provider value={{ locale, setLocale, t }}>
       {children}

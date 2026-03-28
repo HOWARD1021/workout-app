@@ -34,13 +34,16 @@ export interface ExerciseBlock {
 
 export interface WorkoutSummary {
   exerciseCount: number;
+  totalSets: number;
   totalVolume: number;
   duration: number;
-  exercises: Array<{ name: string; maxWeight: number }>;
+  exercises: Array<{ name: string; maxWeight: number; totalSets: number; totalVolume: number }>;
+  muscleGroups: Array<{ name: string; volume: number; color: string }>;
 }
 
 interface WorkoutContextValue {
   // State
+  isRestored: boolean;
   isWorkoutActive: boolean;
   exerciseBlocks: ExerciseBlock[];
   startTime: Date | null;
@@ -86,6 +89,33 @@ interface WorkoutContextValue {
   setExerciseBlocks: React.Dispatch<React.SetStateAction<ExerciseBlock[]>>;
 }
 
+// ── Persistence ────────────────────────────────────────
+const STORAGE_KEY = "workout-active-session";
+const TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 hours
+const AUTO_FINISH_MS = 5 * 60 * 1000;   // 5 min after dialog
+
+interface PersistedWorkout {
+  exerciseBlocks: ExerciseBlock[];
+  startTimeISO: string;
+  templateId: string | null;
+}
+
+function saveSession(data: PersistedWorkout | null) {
+  try {
+    if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    else localStorage.removeItem(STORAGE_KEY);
+  } catch {}
+}
+
+function loadSession(): PersistedWorkout | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as PersistedWorkout) : null;
+  } catch {
+    return null;
+  }
+}
+
 const WorkoutContext = createContext<WorkoutContextValue | null>(null);
 
 export function useWorkout() {
@@ -98,6 +128,7 @@ export function useWorkout() {
 export function WorkoutProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const restoredRef = useRef(false);
 
   // ── Core workout state ──
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
@@ -108,6 +139,9 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   const [templateLoaded, setTemplateLoaded] = useState(false);
   const [completedSummary, setCompletedSummary] =
     useState<WorkoutSummary | null>(null);
+  const [showTimeoutPrompt, setShowTimeoutPrompt] = useState(false);
+  const [isRestored, setIsRestored] = useState(false);
+  const autoFinishTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // ── Exercise list ──
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -118,6 +152,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   const [defaultRestTime, setDefaultRestTime] = useState(90);
   const [isRestTimerExpanded, setIsRestTimerExpanded] = useState(true);
   const restTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const restEndTimeRef = useRef<number | null>(null); // absolute timestamp (ms)
   const REST_TIME_OPTIONS = [30, 60, 90, 120, 180];
 
   // ── Audio ──
@@ -170,9 +205,75 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     exercisesApi.list().then(setExercises).catch(console.error);
   }, []);
 
+  // ── Restore session from localStorage ──
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    const saved = loadSession();
+    if (saved) {
+      setIsWorkoutActive(true);
+      setExerciseBlocks(saved.exerciseBlocks);
+      setStartTime(new Date(saved.startTimeISO));
+      setTemplateId(saved.templateId);
+      setTemplateLoaded(true);
+    }
+    setIsRestored(true);
+  }, []);
+
+  // ── Persist session to localStorage on changes ──
+  useEffect(() => {
+    if (!restoredRef.current) return;
+    if (isWorkoutActive && startTime) {
+      saveSession({
+        exerciseBlocks,
+        startTimeISO: startTime.toISOString(),
+        templateId,
+      });
+    } else if (!isWorkoutActive) {
+      saveSession(null);
+    }
+  }, [isWorkoutActive, exerciseBlocks, startTime, templateId]);
+
+  // ── Warn before closing tab ──
+  useEffect(() => {
+    if (!isWorkoutActive) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isWorkoutActive]);
+
+  // ── Timeout check: show prompt after 2 hours ──
+  useEffect(() => {
+    if (!isWorkoutActive || !startTime) return;
+    const check = setInterval(() => {
+      const elapsed = Date.now() - startTime.getTime();
+      if (elapsed >= TIMEOUT_MS && !showTimeoutPrompt) {
+        setShowTimeoutPrompt(true);
+      }
+    }, 60_000); // check every minute
+    return () => clearInterval(check);
+  }, [isWorkoutActive, startTime, showTimeoutPrompt]);
+
+  // ── Auto-finish 5 min after timeout prompt ──
+  useEffect(() => {
+    if (!showTimeoutPrompt) {
+      if (autoFinishTimerRef.current) clearTimeout(autoFinishTimerRef.current);
+      return;
+    }
+    autoFinishTimerRef.current = setTimeout(() => {
+      // Auto-finish: save whatever is completed
+      finishWorkoutRef.current();
+    }, AUTO_FINISH_MS);
+    return () => {
+      if (autoFinishTimerRef.current) clearTimeout(autoFinishTimerRef.current);
+    };
+  }, [showTimeoutPrompt]);
+
   // ── Elapsed time ticker ──
   useEffect(() => {
     if (!isWorkoutActive || !startTime) return;
+    // Immediate sync
+    setElapsedTime(Math.floor((Date.now() - startTime.getTime()) / 1000));
     const interval = setInterval(() => {
       setElapsedTime(Math.floor((Date.now() - startTime.getTime()) / 1000));
     }, 1000);
@@ -222,51 +323,85 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
             .webkitAudioContext)();
       audioContextRef.current = ctx;
 
-      // Make sure context is running
       if (ctx.state === "suspended") {
         ctx.resume();
       }
 
-      const playBeep = (time: number) => {
+      const playBeep = (time: number, freq: number) => {
         const oscillator = ctx.createOscillator();
         const gainNode = ctx.createGain();
         oscillator.connect(gainNode);
         gainNode.connect(ctx.destination);
-        oscillator.frequency.value = 880;
+        oscillator.frequency.value = freq;
         oscillator.type = "sine";
-        gainNode.gain.setValueAtTime(0.3, time);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
+        gainNode.gain.setValueAtTime(0.8, time);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
         oscillator.start(time);
-        oscillator.stop(time + 0.15);
+        oscillator.stop(time + 0.2);
       };
 
       const now = ctx.currentTime;
-      playBeep(now);
-      playBeep(now + 0.2);
-      playBeep(now + 0.4);
+      // 4 beeps with alternating frequencies for attention
+      playBeep(now, 880);
+      playBeep(now, 1320);
+      playBeep(now + 0.3, 880);
+      playBeep(now + 0.3, 1320);
+      playBeep(now + 0.6, 880);
+      playBeep(now + 0.6, 1320);
+      playBeep(now + 0.9, 1100);
+      playBeep(now + 0.9, 1500);
     } catch (error) {
       console.error("Failed to play sound:", error);
     }
   }, []);
 
-  // ── Rest timer ──
+  // ── Sync timers when tab regains focus (mobile background throttling fix) ──
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState !== "visible") return;
+      // Sync elapsed time
+      if (isWorkoutActive && startTime) {
+        setElapsedTime(Math.floor((Date.now() - startTime.getTime()) / 1000));
+      }
+      // Sync rest timer
+      if (restEndTimeRef.current !== null) {
+        const remaining = Math.ceil((restEndTimeRef.current - Date.now()) / 1000);
+        if (remaining <= 0) {
+          restEndTimeRef.current = null;
+          if (restTimerRef.current) clearInterval(restTimerRef.current);
+          setRestTimer(null);
+          setIsRestTimerRunning(false);
+          playRestEndSound();
+        } else {
+          setRestTimer(remaining);
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [isWorkoutActive, startTime, playRestEndSound]);
+
+  // ── Rest timer (endTime-based for background accuracy) ──
   const startRestTimerFn = useCallback(
     (seconds: number) => {
       if (restTimerRef.current) clearInterval(restTimerRef.current);
+      const endTime = Date.now() + seconds * 1000;
+      restEndTimeRef.current = endTime;
       setRestTimer(seconds);
       setIsRestTimerRunning(true);
       setIsRestTimerExpanded(true);
 
       restTimerRef.current = setInterval(() => {
-        setRestTimer((prev) => {
-          if (prev === null || prev <= 1) {
-            clearInterval(restTimerRef.current!);
-            setIsRestTimerRunning(false);
-            playRestEndSound();
-            return null;
-          }
-          return prev - 1;
-        });
+        const remaining = Math.ceil((restEndTimeRef.current! - Date.now()) / 1000);
+        if (remaining <= 0) {
+          clearInterval(restTimerRef.current!);
+          restEndTimeRef.current = null;
+          setRestTimer(null);
+          setIsRestTimerRunning(false);
+          playRestEndSound();
+        } else {
+          setRestTimer(remaining);
+        }
       }, 1000);
     },
     [playRestEndSound]
@@ -274,12 +409,17 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
   const stopRestTimer = useCallback(() => {
     if (restTimerRef.current) clearInterval(restTimerRef.current);
+    restEndTimeRef.current = null;
     setRestTimer(null);
     setIsRestTimerRunning(false);
   }, []);
 
   const addRestTimeFn = useCallback((seconds: number) => {
-    setRestTimer((prev) => (prev || 0) + seconds);
+    if (restEndTimeRef.current !== null) {
+      restEndTimeRef.current += seconds * 1000;
+      const remaining = Math.ceil((restEndTimeRef.current - Date.now()) / 1000);
+      setRestTimer(Math.max(0, remaining));
+    }
   }, []);
 
   // Cleanup rest timer on unmount
@@ -302,27 +442,50 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
   const calculateSummary = useCallback((): WorkoutSummary => {
     let totalVolume = 0;
-    const exerciseSummaries: Array<{ name: string; maxWeight: number }> = [];
+    let totalSets = 0;
+    const exerciseSummaries: Array<{ name: string; maxWeight: number; totalSets: number; totalVolume: number }> = [];
+    const mgMap: Record<string, number> = {};
+
+    const MG_COLORS: Record<string, string> = {
+      Chest: "#FF4B4B", Back: "#1CB0F6", Legs: "#58CC02",
+      Shoulders: "#FF8C42", Arms: "#CE82FF", Core: "#FFD700",
+      "Full Body": "#AFAFAF", Other: "#AFAFAF",
+    };
 
     exerciseBlocks.forEach((block) => {
       let maxWeight = 0;
+      let blockVolume = 0;
+      let blockSets = 0;
       block.sets.forEach((set) => {
-        if (set.completed && set.weight !== null && set.reps) {
-          totalVolume += Math.abs(set.weight) * set.reps;
-          if (Math.abs(set.weight) > maxWeight)
-            maxWeight = Math.abs(set.weight);
+        if (set.completed) {
+          blockSets++;
+          totalSets++;
+          const w = set.weight !== null ? Math.abs(set.weight) : 0;
+          const r = set.reps || 0;
+          const vol = w * r;
+          totalVolume += vol;
+          blockVolume += vol;
+          if (w > maxWeight) maxWeight = w;
         }
       });
-      if (maxWeight > 0) {
-        exerciseSummaries.push({ name: block.exercise.name, maxWeight });
+      const mg = block.exercise.muscleGroup || "Other";
+      mgMap[mg] = (mgMap[mg] || 0) + blockVolume;
+      if (blockSets > 0) {
+        exerciseSummaries.push({ name: block.exercise.name, maxWeight, totalSets: blockSets, totalVolume: Math.round(blockVolume) });
       }
     });
 
+    const muscleGroups = Object.entries(mgMap)
+      .map(([name, volume]) => ({ name, volume: Math.round(volume), color: MG_COLORS[name] || "#AFAFAF" }))
+      .sort((a, b) => b.volume - a.volume);
+
     return {
       exerciseCount: exerciseBlocks.length,
+      totalSets,
       totalVolume: Math.round(totalVolume),
       duration: elapsedTime,
       exercises: exerciseSummaries,
+      muscleGroups,
     };
   }, [exerciseBlocks, elapsedTime]);
 
@@ -362,10 +525,16 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       stopRestTimer();
       setIsWorkoutActive(false);
       setCompletedSummary(summary);
+      setShowTimeoutPrompt(false);
+      saveSession(null);
     } catch (error) {
       console.error("Failed to save workout:", error);
     }
   }, [startTime, exerciseBlocks, templateId, calculateSummary, stopRestTimer]);
+
+  // Stable ref so the auto-finish timer can call the latest finishWorkout
+  const finishWorkoutRef = useRef(finishWorkout);
+  useEffect(() => { finishWorkoutRef.current = finishWorkout; }, [finishWorkout]);
 
   const discardWorkout = useCallback(() => {
     stopRestTimer();
@@ -376,6 +545,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     setTemplateId(null);
     setTemplateLoaded(false);
     setCompletedSummary(null);
+    setShowTimeoutPrompt(false);
+    saveSession(null);
   }, [stopRestTimer]);
 
   const clearCompletedSummary = useCallback(() => {
@@ -524,6 +695,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
   // ── Context value ──
   const value: WorkoutContextValue = {
+    isRestored,
     isWorkoutActive,
     exerciseBlocks,
     startTime,
@@ -568,7 +740,62 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
           onClick={() => router.push("/log")}
         />
       )}
+      {/* Timeout prompt — shown after 2 hours of activity */}
+      {showTimeoutPrompt && isWorkoutActive && (
+        <WorkoutTimeoutDialog
+          onContinue={() => setShowTimeoutPrompt(false)}
+          onFinish={() => finishWorkout().then(() => router.push("/log"))}
+          onDiscard={() => { discardWorkout(); router.push("/"); }}
+        />
+      )}
     </WorkoutContext.Provider>
+  );
+}
+
+// ── Timeout dialog ─────────────────────────────────────
+function WorkoutTimeoutDialog({
+  onContinue,
+  onFinish,
+  onDiscard,
+}: {
+  onContinue: () => void;
+  onFinish: () => void;
+  onDiscard: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center">
+        <div className="text-4xl mb-3">⏰</div>
+        <h2 className="text-xl font-bold text-[#2D3648] mb-2">
+          還在訓練嗎？
+        </h2>
+        <p className="text-sm text-[#AFAFAF] mb-6">
+          你的訓練已經超過 2 小時了。如果你已經結束，系統會幫你儲存紀錄。
+          <br />
+          <span className="text-xs">5 分鐘內沒有回應將自動結束並儲存。</span>
+        </p>
+        <div className="space-y-2">
+          <button
+            onClick={onContinue}
+            className="w-full py-3 rounded-xl bg-[#58CC02] text-white font-bold shadow-[0_3px_0_0_#46A302] active:shadow-none active:translate-y-0.5 transition-all"
+          >
+            💪 繼續訓練
+          </button>
+          <button
+            onClick={onFinish}
+            className="w-full py-3 rounded-xl bg-[#1CB0F6] text-white font-bold shadow-[0_3px_0_0_#0A9AD6] active:shadow-none active:translate-y-0.5 transition-all"
+          >
+            ✅ 結束並儲存
+          </button>
+          <button
+            onClick={onDiscard}
+            className="w-full py-2.5 rounded-xl text-[#AFAFAF] text-sm font-medium hover:text-red-500 transition-colors"
+          >
+            放棄此次訓練
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

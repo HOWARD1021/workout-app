@@ -11,18 +11,20 @@ function LogPageContent() {
   const searchParams = useSearchParams();
   const templateId = searchParams.get("template");
   const {
+    isRestored,
     isWorkoutActive,
     completedSummary,
     startWorkout,
     clearCompletedSummary,
   } = useWorkout();
 
-  // Start a new workout if navigated here without an active one
+  // Start a new workout only after restore is complete and no active workout exists
   useEffect(() => {
+    if (!isRestored) return;
     if (!isWorkoutActive && !completedSummary) {
       startWorkout(templateId);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isRestored]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (completedSummary) {
     return (

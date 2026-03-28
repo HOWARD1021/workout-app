@@ -152,6 +152,100 @@ export default function AnalyticsPage() {
           </Card>
         </div>
 
+        {/* This Week vs Last Week */}
+        {trends && trends.weeklyFrequency.length >= 2 && (() => {
+          const thisWeek = trends.weeklyFrequency[trends.weeklyFrequency.length - 1];
+          const lastWeek = trends.weeklyFrequency[trends.weeklyFrequency.length - 2];
+          const diff = thisWeek.count - lastWeek.count;
+          return (
+            <Card className="bg-white border-2 border-[#E5E5E5]">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-[#AFAFAF] mb-1">{t("analytics.thisWeek")}</p>
+                    <p className="text-3xl font-bold text-[#2D3648]">{thisWeek.count} <span className="text-sm font-normal text-[#AFAFAF]">{t("home.workouts")}</span></p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-[#AFAFAF] mb-1">{t("analytics.lastWeek")}: {lastWeek.count}</p>
+                    <p className={`text-lg font-bold ${diff > 0 ? "text-[#58CC02]" : diff < 0 ? "text-[#FF4B4B]" : "text-[#AFAFAF]"}`}>
+                      {diff > 0 ? `+${diff} ↑` : diff < 0 ? `${diff} ↓` : "—"}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
+
+        {/* Calendar Heatmap (last 8 weeks) */}
+        {workouts.length > 0 && (() => {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const workoutDateCounts: Record<string, number> = {};
+          workouts.forEach((w) => {
+            const d = new Date(w.startedAt).toISOString().split("T")[0];
+            workoutDateCounts[d] = (workoutDateCounts[d] || 0) + 1;
+          });
+          // Generate last 56 days (8 weeks)
+          const days: { date: string; count: number; dayOfWeek: number }[] = [];
+          for (let i = 55; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            const dateStr = d.toISOString().split("T")[0];
+            days.push({ date: dateStr, count: workoutDateCounts[dateStr] || 0, dayOfWeek: d.getDay() });
+          }
+          // Group into weeks (columns)
+          const weeks: typeof days[] = [];
+          let currentWeek: typeof days = [];
+          days.forEach((d) => {
+            currentWeek.push(d);
+            if (d.dayOfWeek === 6) { // Saturday = end of week
+              weeks.push(currentWeek);
+              currentWeek = [];
+            }
+          });
+          if (currentWeek.length > 0) weeks.push(currentWeek);
+
+          return (
+            <Card className="bg-white border-2 border-[#E5E5E5]">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-[#2D3648] text-base">
+                  📅 {t("analytics.recentWorkouts")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-4">
+                <div className="flex gap-1 justify-center">
+                  {weeks.map((week, wi) => (
+                    <div key={wi} className="flex flex-col gap-1">
+                      {week.map((day) => (
+                        <div
+                          key={day.date}
+                          className="w-4 h-4 rounded-sm"
+                          style={{
+                            backgroundColor: day.count === 0
+                              ? "#F0F0F0"
+                              : day.count === 1
+                              ? "#A8E6A3"
+                              : "#58CC02",
+                          }}
+                          title={`${day.date}: ${day.count} workout${day.count !== 1 ? "s" : ""}`}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-center gap-2 mt-2 text-[10px] text-[#AFAFAF]">
+                  <span>少</span>
+                  <div className="w-3 h-3 rounded-sm bg-[#F0F0F0]" />
+                  <div className="w-3 h-3 rounded-sm bg-[#A8E6A3]" />
+                  <div className="w-3 h-3 rounded-sm bg-[#58CC02]" />
+                  <span>多</span>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
+
         {/* Muscle Group Volume Chart */}
         {muscleGroups.length > 0 && (
           <Card className="bg-white border-2 border-[#E5E5E5]">
@@ -414,6 +508,8 @@ export default function AnalyticsPage() {
                     0
                   );
                   const date = new Date(workout.startedAt);
+                  const endDate = workout.endedAt ? new Date(workout.endedAt) : null;
+                  const durationMin = endDate ? Math.round((endDate.getTime() - date.getTime()) / 60000) : null;
                   return (
                     <div
                       key={workout.id}
@@ -426,6 +522,9 @@ export default function AnalyticsPage() {
                         <p className="text-sm text-[#AFAFAF]">
                           {(workout.workout_logs || []).length}{" "}
                           {t("common.sets")}
+                          {durationMin !== null && (
+                            <span className="ml-2">· {durationMin} min</span>
+                          )}
                         </p>
                       </div>
                       <div className="text-right">
