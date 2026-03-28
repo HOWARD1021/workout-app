@@ -40,34 +40,30 @@ export default function MembershipPage() {
   const { locale } = useI18n();
   const isZh = locale === "zh-TW";
 
-  const [membership, setMembership] = useState<MembershipData | null>(null);
+  const [membership, setMembership] = useState<MembershipData | null>(() => {
+    if (typeof window === "undefined") return null;
+    return loadMembership();
+  });
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Form state
-  const [cost, setCost] = useState("");
-  const [period, setPeriod] = useState<"monthly" | "yearly">("monthly");
-  const [startDate, setStartDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [editing, setEditing] = useState(false);
+  // Form state - initialize from saved membership
+  const [cost, setCost] = useState(() => membership ? String(membership.cost) : "");
+  const [period, setPeriod] = useState<"monthly" | "yearly">(() => membership?.period || "monthly");
+  const [startDate, setStartDate] = useState(() => membership?.startDate || new Date().toISOString().split("T")[0]);
+  const [editing, setEditing] = useState(() => !membership);
 
   useEffect(() => {
-    const saved = loadMembership();
-    if (saved) {
-      setMembership(saved);
-      setCost(String(saved.cost));
-      setPeriod(saved.period);
-      setStartDate(saved.startDate);
-    } else {
-      setEditing(true);
-    }
-
     workoutsApi
       .list()
-      .then(setWorkouts)
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      .then((data) => {
+        setWorkouts(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
   }, []);
 
   const handleSave = () => {
