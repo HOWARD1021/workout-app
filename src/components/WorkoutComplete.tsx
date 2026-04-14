@@ -4,12 +4,13 @@ import { useEffect, useCallback, useState, useRef } from "react";
 import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trophy, Clock, Dumbbell, TrendingUp } from "lucide-react";
+import { Trophy, Clock, Dumbbell, TrendingUp, TrendingDown } from "lucide-react";
 import DuckMascot from "./DuckMascot";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/lib/i18n";
 import { useI18n } from "@/lib/i18n";
-import { achievementsApi, type AchievementWithStatus } from "@/lib/api";
+import { achievementsApi, workoutsApi, type AchievementWithStatus } from "@/lib/api";
+import { loadMembership, calculateMembershipStats } from "@/lib/membership";
 
 interface WorkoutCompleteProps {
   summary: {
@@ -28,6 +29,7 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
   const { t } = useTranslation();
   const { locale } = useI18n();
   const [newAchievements, setNewAchievements] = useState<AchievementWithStatus[]>([]);
+  const [costStats, setCostStats] = useState<{ costPerVisit: number; nextVisitCost: number } | null>(null);
   const hasChecked = useRef(false);
   const isZh = locale === "zh-TW";
 
@@ -80,6 +82,20 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
           setNewAchievements(newUnlocks);
         }
       }).catch(console.error);
+
+      // Calculate membership cost efficiency
+      const membership = loadMembership();
+      if (membership) {
+        workoutsApi.list().then((workouts) => {
+          const count = workouts.filter(
+            (w) => new Date(w.startedAt) >= new Date(membership.startDate)
+          ).length;
+          if (count > 0) {
+            const stats = calculateMembershipStats(membership, count);
+            setCostStats({ costPerVisit: stats.costPerVisit, nextVisitCost: stats.nextVisitCost });
+          }
+        }).catch(console.error);
+      }
     }
   }, [fireConfetti]);
 
@@ -199,6 +215,37 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
           )}
         </CardContent>
       </Card>
+
+      {/* Membership Cost Efficiency */}
+      {costStats && (
+        <Card className="w-full max-w-sm bg-white/95 backdrop-blur border-0 shadow-xl mt-4">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-full bg-[#58CC02]/15 flex items-center justify-center">
+                <TrendingDown className="h-4 w-4 text-[#58CC02]" />
+              </div>
+              <span className="text-sm font-bold text-[#2D3648]">
+                {isZh ? "會費效率" : "Cost Efficiency"}
+              </span>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-[#AFAFAF] mb-1">
+                {isZh ? "本次運動讓每次花費降到" : "Cost per visit is now"}
+              </p>
+              <p className="text-3xl font-black text-[#58CC02]">
+                ${costStats.costPerVisit}
+              </p>
+              {costStats.nextVisitCost < costStats.costPerVisit && (
+                <p className="text-xs text-[#AFAFAF] mt-2">
+                  {isZh
+                    ? `再去一次就降到 $${costStats.nextVisitCost}！繼續加油 💪`
+                    : `One more visit drops it to $${costStats.nextVisitCost}! 💪`}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* New Achievements */}
       {newAchievements.length > 0 && (

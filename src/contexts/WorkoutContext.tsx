@@ -176,7 +176,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       })()
     : null;
 
-  // ── Initialize AudioContext on first user interaction ──
+  // ── Initialize AudioContext + Notification permission on first user interaction ──
   useEffect(() => {
     const initAudio = () => {
       if (!audioInitializedRef.current) {
@@ -189,6 +189,10 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
           audioInitializedRef.current = true;
         } catch (e) {
           console.error("Failed to init AudioContext:", e);
+        }
+        // Request notification permission
+        if ("Notification" in window && Notification.permission === "default") {
+          Notification.requestPermission();
         }
       }
     };
@@ -327,29 +331,60 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         ctx.resume();
       }
 
-      const playBeep = (time: number, freq: number) => {
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        oscillator.frequency.value = freq;
-        oscillator.type = "sine";
-        gainNode.gain.setValueAtTime(0.8, time);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
-        oscillator.start(time);
-        oscillator.stop(time + 0.2);
+      const playBeep = (time: number, freq: number, duration = 0.3) => {
+        // Sine layer
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.frequency.value = freq;
+        osc1.type = "sine";
+        gain1.gain.setValueAtTime(1.0, time);
+        gain1.gain.exponentialRampToValueAtTime(0.01, time + duration);
+        osc1.start(time);
+        osc1.stop(time + duration);
+
+        // Square wave layer for sharper tone
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.frequency.value = freq;
+        osc2.type = "square";
+        gain2.gain.setValueAtTime(0.3, time);
+        gain2.gain.exponentialRampToValueAtTime(0.01, time + duration);
+        osc2.start(time);
+        osc2.stop(time + duration);
       };
 
       const now = ctx.currentTime;
-      // 4 beeps with alternating frequencies for attention
+      // 6 groups of beeps — escalating urgency
       playBeep(now, 880);
       playBeep(now, 1320);
-      playBeep(now + 0.3, 880);
-      playBeep(now + 0.3, 1320);
-      playBeep(now + 0.6, 880);
-      playBeep(now + 0.6, 1320);
-      playBeep(now + 0.9, 1100);
-      playBeep(now + 0.9, 1500);
+      playBeep(now + 0.4, 880);
+      playBeep(now + 0.4, 1320);
+      playBeep(now + 0.8, 1100);
+      playBeep(now + 0.8, 1500);
+      playBeep(now + 1.2, 1100);
+      playBeep(now + 1.2, 1500);
+      playBeep(now + 1.6, 1320);
+      playBeep(now + 1.6, 1760);
+      // Final long high-pitch finish signal
+      playBeep(now + 2.0, 1760, 0.5);
+
+      // Vibrate on supported devices
+      if (navigator.vibrate) {
+        navigator.vibrate([200, 100, 200, 100, 300]);
+      }
+
+      // Browser notification when page is in background
+      if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+        new Notification("休息結束！", {
+          body: "回來繼續訓練 💪",
+          icon: "/duck.png",
+          tag: "rest-timer",
+        });
+      }
     } catch (error) {
       console.error("Failed to play sound:", error);
     }

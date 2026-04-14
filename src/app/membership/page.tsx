@@ -9,30 +9,12 @@ import { useRouter } from "next/navigation";
 import { workoutsApi, type Workout } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import { useI18n } from "@/lib/i18n";
-
-const STORAGE_KEY = "workout-membership";
-
-interface MembershipData {
-  cost: number;
-  period: "monthly" | "yearly";
-  startDate: string;
-}
-
-function loadMembership(): MembershipData | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveMembership(data: MembershipData | null) {
-  try {
-    if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    else localStorage.removeItem(STORAGE_KEY);
-  } catch {}
-}
+import {
+  loadMembership,
+  saveMembership,
+  calculateMembershipStats,
+  type MembershipData,
+} from "@/lib/membership";
 
 export default function MembershipPage() {
   const router = useRouter();
@@ -83,28 +65,18 @@ export default function MembershipPage() {
   };
 
   // Calculate stats
-  const startDateObj = membership ? new Date(membership.startDate) : null;
-  const today = new Date();
-
-  const daysSinceStart = startDateObj
-    ? Math.max(1, Math.floor((today.getTime() - startDateObj.getTime()) / (1000 * 60 * 60 * 24)))
-    : 0;
-
   const workoutsSinceStart = membership
-    ? workouts.filter((w) => new Date(w.startedAt) >= startDateObj!).length
+    ? workouts.filter((w) => new Date(w.startedAt) >= new Date(membership.startDate)).length
     : 0;
 
-  const totalCostSoFar = membership
-    ? membership.period === "monthly"
-      ? membership.cost * Math.ceil(daysSinceStart / 30)
-      : membership.cost * Math.ceil(daysSinceStart / 365)
-    : 0;
+  const mStats = membership
+    ? calculateMembershipStats(membership, workoutsSinceStart)
+    : null;
 
-  const costPerVisit =
-    workoutsSinceStart > 0 ? Math.round(totalCostSoFar / workoutsSinceStart) : 0;
-
-  const costPerDay =
-    daysSinceStart > 0 ? Math.round(totalCostSoFar / daysSinceStart) : 0;
+  const daysSinceStart = mStats?.daysSinceStart ?? 0;
+  const totalCostSoFar = mStats?.totalCostSoFar ?? 0;
+  const costPerVisit = mStats?.costPerVisit ?? 0;
+  const costPerDay = mStats?.costPerDay ?? 0;
 
   if (loading) {
     return (

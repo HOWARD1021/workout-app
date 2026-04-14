@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Flame, Heart, ChevronRight, Trophy, Target, LayoutTemplate, Award, Users, Wallet } from "lucide-react";
+import { Flame, Heart, ChevronRight, Trophy, Target, LayoutTemplate, Award, Users, Wallet, TrendingDown } from "lucide-react";
 import { workoutsApi } from "@/lib/api";
 import DuckMascot from "./DuckMascot";
 import TemplateSelector from "./TemplateSelector";
@@ -9,6 +9,7 @@ import InactivityReminder from "./InactivityReminder";
 import { useRouter } from "next/navigation";
 import { useWorkout } from "@/contexts/WorkoutContext";
 import { useTranslation, useI18n } from "@/lib/i18n";
+import { loadMembership, calculateMembershipStats } from "@/lib/membership";
 
 const GOAL_KEY = "workout-weekly-goal";
 function loadGoal(): number {
@@ -42,6 +43,7 @@ export default function WorkoutDashboard() {
   const [showInactivityReminder, setShowInactivityReminder] = useState(false);
   const [weeklyGoal, setWeeklyGoalState] = useState(4);
   const [showGoalPicker, setShowGoalPicker] = useState(false);
+  const [costPerVisit, setCostPerVisit] = useState<number | null>(null);
 
   // Load weekly goal from localStorage
   useEffect(() => {
@@ -126,6 +128,18 @@ export default function WorkoutDashboard() {
       // Show inactivity reminder if > 2 days since last workout
       if (daysSinceLastWorkout > 2) {
         setShowInactivityReminder(true);
+      }
+
+      // Calculate membership cost per visit
+      const membership = loadMembership();
+      if (membership) {
+        const workoutsSinceMembership = allWorkouts.filter(
+          (w) => new Date(w.startedAt) >= new Date(membership.startDate)
+        ).length;
+        if (workoutsSinceMembership > 0) {
+          const mStats = calculateMembershipStats(membership, workoutsSinceMembership);
+          setCostPerVisit(mStats.costPerVisit);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch workout data:", error);
@@ -276,6 +290,24 @@ export default function WorkoutDashboard() {
             <p className="text-sm text-gray-500 font-medium">{t("home.totalKg")}</p>
           </div>
         </div>
+
+        {/* Membership Cost Banner */}
+        {costPerVisit !== null && (
+          <button
+            onClick={() => router.push("/membership")}
+            className="w-full mb-4 py-3 px-4 rounded-2xl bg-gradient-to-r from-[#58CC02] to-[#46A302] text-white flex items-center justify-between shadow-sm active:scale-[0.98] transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <TrendingDown className="w-4 h-4" />
+              <span className="text-sm font-bold">
+                {isZh ? `每次運動 $${costPerVisit}` : `$${costPerVisit}/visit`}
+              </span>
+            </div>
+            <span className="text-xs text-white/70">
+              {isZh ? "查看詳情 ›" : "Details ›"}
+            </span>
+          </button>
+        )}
 
         {/* Bottom Action Buttons */}
         <div className="grid grid-cols-2 gap-3 mb-3">
