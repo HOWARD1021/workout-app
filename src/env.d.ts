@@ -10,6 +10,8 @@ declare global {
     IMAGE_API_BASE?: string;
     IMAGE_API_KEY?: string;
     IMAGE_MODEL?: string;
+    POLAR_ACCESS_TOKEN: string;
+    POLAR_WEBHOOK_SECRET: string;
   }
 }
 

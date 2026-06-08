@@ -16,6 +16,9 @@ import {
   Trash2,
   GripVertical,
   Eye,
+  Bell,
+  BellOff,
+  MessageSquare,
 } from "lucide-react";
 import {
   DndContext,
@@ -56,6 +59,7 @@ function SortableExerciseCard({
   deleteSet,
   addSet,
   onViewExercise,
+  onUpdateBlockNote,
 }: {
   block: ExerciseBlock;
   blockIndex: number;
@@ -65,7 +69,10 @@ function SortableExerciseCard({
   deleteSet: (blockIndex: number, setIndex: number) => void;
   addSet: (blockIndex: number) => void;
   onViewExercise: (name: string, muscleGroup: string | null) => void;
+  onUpdateBlockNote: (blockIndex: number, note: string) => void;
 }) {
+  const [showNote, setShowNote] = useState(!!block.note);
+
   const {
     attributes,
     listeners,
@@ -99,6 +106,17 @@ function SortableExerciseCard({
           <Dumbbell className="h-5 w-5" />
           <span className="flex-1">{block.exercise.name}</span>
           <button
+            onClick={() => setShowNote(!showNote)}
+            className={`p-1.5 rounded-md transition-colors ${
+              block.note
+                ? "bg-[#FFF8E1] text-[#FF8C42]"
+                : "hover:bg-[#F7F7F7] text-[#AFAFAF] hover:text-[#2D3648]"
+            }`}
+            title="筆記"
+          >
+            <MessageSquare className="h-4 w-4" />
+          </button>
+          <button
             onClick={() => onViewExercise(block.exercise.name, block.exercise.muscleGroup)}
             className="p-1.5 rounded-md hover:bg-[#E8F5E9] text-[#AFAFAF] hover:text-[#58CC02] transition-colors"
             title="查看動作"
@@ -108,6 +126,19 @@ function SortableExerciseCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Exercise Note */}
+        {showNote && (
+          <div className="mb-3">
+            <textarea
+              placeholder="筆記：握距、節奏、注意事項..."
+              value={block.note || ""}
+              onChange={(e) => onUpdateBlockNote(blockIndex, e.target.value)}
+              className="w-full text-sm border-2 border-[#E5E5E5] focus:border-[#58CC02] rounded-lg p-2 resize-none outline-none transition-colors"
+              rows={2}
+            />
+          </div>
+        )}
+
         {/* Table Header */}
         <div className="grid grid-cols-[40px_1fr_80px_80px_50px] gap-2 mb-2 text-sm text-[#AFAFAF] font-medium">
           <div>Set</div>
@@ -241,6 +272,7 @@ export default function WorkoutLogger() {
     deleteSet,
     updateSet,
     toggleSetComplete,
+    updateBlockNote,
     reorderBlocks,
     finishWorkout,
     restTimer,
@@ -250,6 +282,7 @@ export default function WorkoutLogger() {
     REST_TIME_OPTIONS,
     setDefaultRestTime,
     addRestTime,
+    startRestTimer,
     stopRestTimer,
     setIsRestTimerExpanded,
   } = workout;
@@ -262,6 +295,36 @@ export default function WorkoutLogger() {
     name: string;
     muscleGroup: string | null;
   }>({ open: false, name: "", muscleGroup: null });
+  const [notifPermission, setNotifPermission] = useState<string>(
+    typeof window !== "undefined" && "Notification" in window
+      ? Notification.permission
+      : "unsupported"
+  );
+
+  const handleEnableNotifications = async () => {
+    if (!("Notification" in window)) return;
+    const result = await Notification.requestPermission();
+    setNotifPermission(result);
+    if (result === "granted") {
+      // Send a test notification to confirm it works
+      if (navigator.serviceWorker?.controller) {
+        navigator.serviceWorker.ready.then((reg) => {
+          reg.showNotification("通知已開啟！✅", {
+            body: "休息計時器結束時會通知你",
+            icon: "/images/duck-mascot.png",
+            tag: "test",
+            silent: false,
+          });
+        });
+      } else {
+        new Notification("通知已開啟！✅", {
+          body: "休息計時器結束時會通知你",
+          icon: "/images/duck-mascot.png",
+          silent: false,
+        });
+      }
+    }
+  };
 
   const openImageDialog = (name: string, muscleGroup: string | null) => {
     setImageDialog({ open: true, name, muscleGroup });
@@ -373,7 +436,7 @@ export default function WorkoutLogger() {
 
         {/* Rest Time Settings */}
         <Card className="bg-white border-2 border-[#E5E5E5] mb-4">
-          <CardContent className="p-3">
+          <CardContent className="p-3 space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-[#2D3648]">
                 <Timer className="h-4 w-4" />
@@ -396,6 +459,48 @@ export default function WorkoutLogger() {
                   </Button>
                 ))}
               </div>
+            </div>
+            {/* Notification Permission */}
+            <div className="flex items-center justify-between pt-1 border-t border-[#F0F0F0]">
+              <div className="flex items-center gap-2">
+                {notifPermission === "granted" ? (
+                  <Bell className="h-4 w-4 text-[#58CC02]" />
+                ) : (
+                  <BellOff className="h-4 w-4 text-[#AFAFAF]" />
+                )}
+                <span className="text-sm text-[#2D3648]">
+                  {notifPermission === "granted"
+                    ? "通知已開啟"
+                    : notifPermission === "denied"
+                    ? "通知被封鎖"
+                    : "背景通知"}
+                </span>
+              </div>
+              {notifPermission !== "granted" && notifPermission !== "denied" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs bg-[#58CC02] text-white hover:bg-[#46A302] px-3 py-1"
+                  onClick={handleEnableNotifications}
+                >
+                  開啟通知
+                </Button>
+              )}
+              {notifPermission === "denied" && (
+                <span className="text-xs text-[#AFAFAF]">
+                  請到系統設定開啟
+                </span>
+              )}
+              {notifPermission === "granted" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs bg-[#1CB0F6] text-white hover:bg-[#0A9AD6] px-3 py-1"
+                  onClick={() => startRestTimer(3)}
+                >
+                  3s 測試
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -421,6 +526,7 @@ export default function WorkoutLogger() {
                 deleteSet={deleteSet}
                 addSet={addSet}
                 onViewExercise={openImageDialog}
+                onUpdateBlockNote={updateBlockNote}
               />
             ))}
           </SortableContext>

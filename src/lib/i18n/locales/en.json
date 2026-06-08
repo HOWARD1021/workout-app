@@ -128,5 +128,11 @@
     "message": "It's been {days} days since your last workout!",
     "startNow": "Start Working Out 💪",
     "later": "Remind Later"
+  },
+  "pricing": {
+    "title": "Pricing",
+    "upgradePro": "Upgrade to Pro",
+    "manageSubscription": "Manage Subscription",
+    "signOut": "Sign Out"
   }
 }

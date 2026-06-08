@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/lib/i18n";
 import { WorkoutProvider } from "@/contexts/WorkoutContext";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,6 +18,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Workout App",
   description: "Track your workouts and progress",
+  manifest: "/manifest.json",
+  themeColor: "#58CC02",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Workout",
+  },
 };
 
 export default function RootLayout({
@@ -31,6 +39,7 @@ export default function RootLayout({
       >
         <I18nProvider>
           <WorkoutProvider>{children}</WorkoutProvider>
+          <Toaster position="top-center" richColors />
         </I18nProvider>
       </body>
     </html>

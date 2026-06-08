@@ -9,6 +9,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
+import { toast } from "sonner";
 import { exercisesApi, workoutsApi, type Exercise } from "@/lib/api";
 import { usePreviousExerciseData } from "@/hooks/usePreviousExerciseData";
 import {
@@ -24,12 +25,14 @@ export interface SetLog {
   reps: number | null;
   completed: boolean;
   previous?: string;
+  note?: string;
 }
 
 export interface ExerciseBlock {
   id: string;
   exercise: Exercise;
   sets: SetLog[];
+  note?: string;
 }
 
 export interface WorkoutSummary {
@@ -80,6 +83,8 @@ interface WorkoutContextValue {
     value: string
   ) => void;
   toggleSetComplete: (blockIndex: number, setIndex: number) => void;
+  updateBlockNote: (blockIndex: number, note: string) => void;
+  updateSetNote: (blockIndex: number, setIndex: number, note: string) => void;
   reorderBlocks: (activeId: string, overId: string) => void;
   setDefaultRestTime: (seconds: number) => void;
   startRestTimer: (seconds: number) => void;
@@ -159,6 +164,9 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioInitializedRef = useRef(false);
 
+  // ── Service Worker ──
+  const swRef = useRef<ServiceWorkerRegistration | null>(null);
+
   // ── Previous exercise data ──
   const exerciseIds = exerciseBlocks.map((b) => b.exercise.id);
   const { getPrevious, fetchForExercise } = usePreviousExerciseData(exerciseIds);
@@ -175,6 +183,16 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         return t ? { name: t.name, muscleGroup: t.muscleGroup } : null;
       })()
     : null;
+
+  // ── Register Service Worker ──
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((reg) => { swRef.current = reg; })
+        .catch((err) => console.error("SW registration failed:", err));
+    }
+  }, []);
 
   // ── Initialize AudioContext + Notification permission on first user interaction ──
   useEffect(() => {
@@ -377,14 +395,16 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         navigator.vibrate([200, 100, 200, 100, 300]);
       }
 
-      // Browser notification when page is in background
-      if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+      // Browser notification (background) + toast (foreground)
+      if ("Notification" in window && Notification.permission === "granted") {
         new Notification("休息結束！", {
           body: "回來繼續訓練 💪",
-          icon: "/duck.png",
+          icon: "/images/duck-mascot.png",
           tag: "rest-timer",
+          silent: false,
         });
       }
+      toast.success("休息結束！回來繼續訓練 💪", { duration: 5000 });
     } catch (error) {
       console.error("Failed to play sound:", error);
     }
@@ -416,6 +436,15 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [isWorkoutActive, startTime, playRestEndSound]);
 
+  // ── Helper: send message to service worker ──
+  const postToSW = useCallback((msg: { type: string; endTime?: number }) => {
+    if (swRef.current?.active) {
+      swRef.current.active.postMessage(msg);
+    } else if (navigator.serviceWorker?.controller) {
+      navigator.serviceWorker.controller.postMessage(msg);
+    }
+  }, []);
+
   // ── Rest timer (endTime-based for background accuracy) ──
   const startRestTimerFn = useCallback(
     (seconds: number) => {
@@ -425,6 +454,9 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       setRestTimer(seconds);
       setIsRestTimerRunning(true);
       setIsRestTimerExpanded(true);
+
+      // Tell service worker to fire notification when timer ends
+      postToSW({ type: "START_TIMER", endTime });
 
       restTimerRef.current = setInterval(() => {
         const remaining = Math.ceil((restEndTimeRef.current! - Date.now()) / 1000);
@@ -439,7 +471,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         }
       }, 1000);
     },
-    [playRestEndSound]
+    [playRestEndSound, postToSW]
   );
 
   const stopRestTimer = useCallback(() => {
@@ -447,15 +479,18 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     restEndTimeRef.current = null;
     setRestTimer(null);
     setIsRestTimerRunning(false);
-  }, []);
+    postToSW({ type: "STOP_TIMER" });
+  }, [postToSW]);
 
   const addRestTimeFn = useCallback((seconds: number) => {
     if (restEndTimeRef.current !== null) {
       restEndTimeRef.current += seconds * 1000;
       const remaining = Math.ceil((restEndTimeRef.current - Date.now()) / 1000);
       setRestTimer(Math.max(0, remaining));
+      // Update service worker with new end time
+      postToSW({ type: "START_TIMER", endTime: restEndTimeRef.current });
     }
-  }, []);
+  }, [postToSW]);
 
   // Cleanup rest timer on unmount
   useEffect(() => {
@@ -533,16 +568,19 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       set_order: number;
       weight: number | null;
       reps: number | null;
+      note?: string;
     }> = [];
 
     exerciseBlocks.forEach((block) => {
       block.sets.forEach((set) => {
         if (set.completed) {
+          const setNote = [block.note, set.note].filter(Boolean).join(" | ");
           logs.push({
             exercise_id: block.exercise.id,
             set_order: set.set_order,
             weight: set.weight,
             reps: set.reps,
+            note: setNote || undefined,
           });
         }
       });
@@ -716,6 +754,24 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     [exerciseBlocks, defaultRestTime, startRestTimerFn]
   );
 
+  const updateBlockNote = useCallback((blockIndex: number, note: string) => {
+    setExerciseBlocks((prev) =>
+      prev.map((b, i) => (i === blockIndex ? { ...b, note } : b))
+    );
+  }, []);
+
+  const updateSetNote = useCallback((blockIndex: number, setIndex: number, note: string) => {
+    setExerciseBlocks((prev) =>
+      prev.map((b, bi) => {
+        if (bi !== blockIndex) return b;
+        return {
+          ...b,
+          sets: b.sets.map((s, si) => (si === setIndex ? { ...s, note } : s)),
+        };
+      })
+    );
+  }, []);
+
   const reorderBlocks = useCallback((activeId: string, overId: string) => {
     setExerciseBlocks((items) => {
       const oldIndex = items.findIndex((i) => i.id === activeId);
@@ -754,6 +810,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     deleteSet,
     updateSet,
     toggleSetComplete,
+    updateBlockNote,
+    updateSetNote,
     reorderBlocks,
     setDefaultRestTime,
     startRestTimer: startRestTimerFn,

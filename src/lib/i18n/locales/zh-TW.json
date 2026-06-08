@@ -128,5 +128,11 @@
     "message": "你已經 {days} 天沒來運動了！",
     "startNow": "現在開始運動 💪",
     "later": "稍後提醒"
+  },
+  "pricing": {
+    "title": "升級方案",
+    "upgradePro": "升級 Pro",
+    "manageSubscription": "管理訂閱",
+    "signOut": "登出"
   }
 }

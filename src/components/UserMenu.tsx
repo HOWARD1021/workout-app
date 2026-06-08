@@ -1,13 +1,18 @@
 "use client";
 
 import { useSession, signOut } from "@/lib/auth-client";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Crown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useI18n } from "@/lib/i18n";
 
 export default function UserMenu() {
   const { data: session, isPending } = useSession();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const { locale } = useI18n();
+  const isZh = locale === "zh-TW";
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -63,6 +68,16 @@ export default function UserMenu() {
 
           {/* Actions */}
           <button
+            onClick={() => {
+              router.push("/pricing");
+              setOpen(false);
+            }}
+            className="w-full px-4 py-3 text-left text-sm font-medium text-[#FF8C42] hover:bg-orange-50 flex items-center gap-2 transition-colors"
+          >
+            <Crown className="w-4 h-4" />
+            {isZh ? "升級 Pro" : "Upgrade to Pro"}
+          </button>
+          <button
             onClick={async () => {
               await signOut();
               setOpen(false);
@@ -71,7 +86,7 @@ export default function UserMenu() {
             className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
           >
             <LogOut className="w-4 h-4" />
-            登出
+            {isZh ? "登出" : "Sign Out"}
           </button>
         </div>
       )}

@@ -49,6 +49,7 @@ export const workoutsApi = {
       set_order: number;
       weight: number | null;
       reps: number | null;
+      note?: string;
     }>;
   }) =>
     fetchApi<Workout>("/workouts", {

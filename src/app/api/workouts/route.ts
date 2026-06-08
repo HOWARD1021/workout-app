@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       ended_at: string;
       template_id?: string;
       note?: string;
-      logs?: Array<{ exercise_id: string; set_order: number; weight: number | null; reps: number | null }>;
+      logs?: Array<{ exercise_id: string; set_order: number; weight: number | null; reps: number | null; note?: string }>;
     };
 
     // Create workout with user_id
@@ -83,12 +83,13 @@ export async function POST(request: Request) {
     // Create workout logs
     if (body.logs && body.logs.length > 0) {
       await db.insert(workoutLogs).values(
-        body.logs.map((log: { exercise_id: string; set_order: number; weight: number | null; reps: number | null }) => ({
+        body.logs.map((log) => ({
           workoutId: workout.id,
           exerciseId: log.exercise_id,
           setOrder: log.set_order,
           weight: log.weight,
           reps: log.reps,
+          note: log.note || null,
         }))
       );
     }

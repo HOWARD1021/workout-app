@@ -86,11 +86,7 @@ function playRestEndSound(ctx: ReturnType<typeof createMockAudioContext>) {
     navigator.vibrate([200, 100, 200, 100, 300]);
   }
 
-  if (
-    document.hidden &&
-    "Notification" in window &&
-    Notification.permission === "granted"
-  ) {
+  if ("Notification" in window && Notification.permission === "granted") {
     new Notification("休息結束！", {
       body: "回來繼續訓練 💪",
       icon: "/duck.png",
@@ -206,7 +202,7 @@ describe("rest timer alerts", () => {
       });
     });
 
-    it("does NOT send notification when page is visible", () => {
+    it("sends notification even when page is visible", () => {
       const NotificationMock = vi.fn();
       Object.defineProperty(NotificationMock, "permission", {
         value: "granted",
@@ -227,7 +223,7 @@ describe("rest timer alerts", () => {
       const ctx = createMockAudioContext();
       playRestEndSound(ctx);
 
-      expect(NotificationMock).not.toHaveBeenCalled();
+      expect(NotificationMock).toHaveBeenCalledWith("休息結束！", expect.any(Object));
     });
 
     it("does NOT send notification when permission is not granted", () => {
