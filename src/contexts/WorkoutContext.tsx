@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
-import { exercisesApi, workoutsApi, type Exercise } from "@/lib/api";
+import { exercisesApi, workoutsApi, analyticsApi, type Exercise, type ExercisePR } from "@/lib/api";
 import { usePreviousExerciseData } from "@/hooks/usePreviousExerciseData";
 import {
   useTemplateDetails,
@@ -40,8 +40,9 @@ export interface WorkoutSummary {
   totalSets: number;
   totalVolume: number;
   duration: number;
-  exercises: Array<{ name: string; maxWeight: number; totalSets: number; totalVolume: number }>;
+  exercises: Array<{ name: string; maxWeight: number; totalSets: number; totalVolume: number; isPR?: boolean }>;
   muscleGroups: Array<{ name: string; volume: number; color: string }>;
+  newPRs: Array<{ exerciseName: string; weight: number; previousBest: number }>;
 }
 
 interface WorkoutContextValue {
@@ -510,17 +511,24 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     setCompletedSummary(null);
   }, []);
 
-  const calculateSummary = useCallback((): WorkoutSummary => {
+  const calculateSummary = useCallback((prs?: ExercisePR[]): WorkoutSummary => {
     let totalVolume = 0;
     let totalSets = 0;
-    const exerciseSummaries: Array<{ name: string; maxWeight: number; totalSets: number; totalVolume: number }> = [];
+    const exerciseSummaries: Array<{ name: string; maxWeight: number; totalSets: number; totalVolume: number; isPR?: boolean }> = [];
     const mgMap: Record<string, number> = {};
+    const newPRs: Array<{ exerciseName: string; weight: number; previousBest: number }> = [];
 
     const MG_COLORS: Record<string, string> = {
       Chest: "#FF4B4B", Back: "#1CB0F6", Legs: "#58CC02",
       Shoulders: "#FF8C42", Arms: "#CE82FF", Core: "#FFD700",
       "Full Body": "#AFAFAF", Other: "#AFAFAF",
     };
+
+    // Build PR lookup from before this workout
+    const prLookup: Record<string, number> = {};
+    if (prs) {
+      prs.forEach((pr) => { prLookup[pr.exerciseName] = pr.maxWeight; });
+    }
 
     exerciseBlocks.forEach((block) => {
       let maxWeight = 0;
@@ -540,8 +548,16 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       });
       const mg = block.exercise.muscleGroup || "Other";
       mgMap[mg] = (mgMap[mg] || 0) + blockVolume;
+
+      // Check for new PR
+      const previousBest = prLookup[block.exercise.name] || 0;
+      const isPR = maxWeight > previousBest && maxWeight > 0;
+
       if (blockSets > 0) {
-        exerciseSummaries.push({ name: block.exercise.name, maxWeight, totalSets: blockSets, totalVolume: Math.round(blockVolume) });
+        exerciseSummaries.push({ name: block.exercise.name, maxWeight, totalSets: blockSets, totalVolume: Math.round(blockVolume), isPR });
+        if (isPR) {
+          newPRs.push({ exerciseName: block.exercise.name, weight: maxWeight, previousBest });
+        }
       }
     });
 
@@ -556,6 +572,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       duration: elapsedTime,
       exercises: exerciseSummaries,
       muscleGroups,
+      newPRs,
     };
   }, [exerciseBlocks, elapsedTime]);
 
@@ -587,6 +604,12 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     });
 
     try {
+      // Fetch current PRs BEFORE saving (so we compare against pre-workout bests)
+      let currentPRs: ExercisePR[] = [];
+      try {
+        currentPRs = await analyticsApi.prs();
+      } catch { /* ignore — PR detection is best-effort */ }
+
       await workoutsApi.create({
         started_at: startTime.toISOString(),
         ended_at: endTime.toISOString(),
@@ -594,12 +617,17 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         logs,
       });
 
-      const summary = calculateSummary();
+      const summary = calculateSummary(currentPRs);
       stopRestTimer();
       setIsWorkoutActive(false);
       setCompletedSummary(summary);
       setShowTimeoutPrompt(false);
       saveSession(null);
+
+      // Toast for new PRs
+      if (summary.newPRs.length > 0) {
+        toast.success(`🏆 ${summary.newPRs.length} 個新紀錄！`, { duration: 5000 });
+      }
     } catch (error) {
       console.error("Failed to save workout:", error);
     }

@@ -11,16 +11,10 @@ import { useTranslation } from "@/lib/i18n";
 import { useI18n } from "@/lib/i18n";
 import { achievementsApi, workoutsApi, type AchievementWithStatus } from "@/lib/api";
 import { loadMembership, calculateMembershipStats } from "@/lib/membership";
+import { type WorkoutSummary } from "@/contexts/WorkoutContext";
 
 interface WorkoutCompleteProps {
-  summary: {
-    exerciseCount: number;
-    totalSets: number;
-    totalVolume: number;
-    duration: number;
-    exercises: Array<{ name: string; maxWeight: number; totalSets: number; totalVolume: number }>;
-    muscleGroups: Array<{ name: string; volume: number; color: string }>;
-  };
+  summary: WorkoutSummary;
   onDone?: () => void;
 }
 
@@ -199,15 +193,25 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
                 {summary.exercises.map((ex, i) => (
                   <div
                     key={i}
-                    className="flex justify-between items-center text-sm"
+                    className={`flex justify-between items-center text-sm ${
+                      ex.isPR ? "bg-[#FFF8E1] rounded-lg px-2 py-1.5 -mx-2 border border-[#FFD700]" : ""
+                    }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
+                      {ex.isPR && <span className="text-sm shrink-0">🏆</span>}
                       <span className="text-[#2D3648] truncate">{ex.name}</span>
                       <span className="text-[10px] text-[#AFAFAF] shrink-0">{ex.totalSets}{isZh ? "組" : "s"}</span>
                     </div>
-                    <span className="font-bold text-[#58CC02] shrink-0 ml-2">
-                      {ex.maxWeight} kg
-                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                      <span className={`font-bold ${ex.isPR ? "text-[#FF8C42]" : "text-[#58CC02]"}`}>
+                        {ex.maxWeight} kg
+                      </span>
+                      {ex.isPR && (
+                        <span className="text-[9px] font-bold text-[#FF8C42] bg-[#FF8C42]/10 px-1.5 py-0.5 rounded-full">
+                          PR!
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -215,6 +219,35 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
           )}
         </CardContent>
       </Card>
+
+      {/* New PRs Celebration */}
+      {summary.newPRs && summary.newPRs.length > 0 && (
+        <Card className="w-full max-w-sm bg-gradient-to-r from-[#FFD700] to-[#FF8C42] border-0 shadow-xl mt-4">
+          <CardContent className="p-4">
+            <div className="text-center mb-3">
+              <p className="text-2xl">🏆</p>
+              <p className="text-white font-black text-lg">
+                {isZh ? `${summary.newPRs.length} 個新紀錄！` : `${summary.newPRs.length} New PR${summary.newPRs.length > 1 ? "s" : ""}!`}
+              </p>
+            </div>
+            <div className="space-y-2">
+              {summary.newPRs.map((pr, i) => (
+                <div key={i} className="bg-white/20 rounded-xl px-3 py-2 flex justify-between items-center">
+                  <span className="text-white font-medium text-sm truncate">{pr.exerciseName}</span>
+                  <div className="text-right shrink-0 ml-2">
+                    <span className="text-white font-black">{pr.weight} kg</span>
+                    {pr.previousBest > 0 && (
+                      <span className="text-white/70 text-xs ml-1">
+                        (+{pr.weight - pr.previousBest})
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Membership Cost Efficiency */}
       {costStats && (

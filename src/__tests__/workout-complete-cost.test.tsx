@@ -33,6 +33,7 @@ const baseSummary = {
     { name: "Bench Press", maxWeight: 80, totalSets: 3, totalVolume: 2000 },
   ],
   muscleGroups: [{ name: "Chest", volume: 5000, color: "#FF4B4B" }],
+  newPRs: [],
 };
 
 describe("WorkoutComplete cost efficiency card", () => {

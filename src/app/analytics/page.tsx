@@ -3,16 +3,17 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, TrendingUp, Calendar, Dumbbell } from "lucide-react";
+import { ArrowLeft, TrendingUp, Calendar, Dumbbell, Trophy } from "lucide-react";
 import {
   workoutsApi,
   analyticsApi,
   type Workout,
   type MuscleGroupData,
   type TrendsData,
+  type ExercisePR,
 } from "@/lib/api";
 import { useRouter } from "next/navigation";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, useI18n } from "@/lib/i18n";
 
 const MUSCLE_COLORS: Record<string, string> = {
   chest: "#FF4B4B",
@@ -37,23 +38,27 @@ const MUSCLE_LABELS_ZH: Record<string, string> = {
 export default function AnalyticsPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { locale } = useI18n();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [muscleGroups, setMuscleGroups] = useState<MuscleGroupData[]>([]);
   const [trends, setTrends] = useState<TrendsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
+  const [prs, setPrs] = useState<ExercisePR[]>([]);
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [workoutData, mgData, trendData] = await Promise.all([
+        const [workoutData, mgData, trendData, prData] = await Promise.all([
           workoutsApi.list(),
           analyticsApi.muscleGroups().catch(() => []),
           analyticsApi.trends().catch(() => null),
+          analyticsApi.prs().catch(() => []),
         ]);
         setWorkouts(workoutData);
         setMuscleGroups(mgData);
         setTrends(trendData);
+        setPrs(prData);
         if (trendData?.exerciseTrends?.length) {
           setSelectedExercise(trendData.exerciseTrends[0].exerciseId);
         }
@@ -484,6 +489,45 @@ export default function AnalyticsPage() {
                   </svg>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Personal Records */}
+        {prs.length > 0 && (
+          <Card className="bg-white border-2 border-[#E5E5E5]">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-[#2D3648] text-base flex items-center gap-2">
+                <Trophy className="h-4 w-4 text-[#FFD700]" />
+                {locale === "zh-TW" ? "個人紀錄 (PR)" : "Personal Records"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pb-4">
+              <div className="space-y-2.5">
+                {prs.slice(0, 10).map((pr) => (
+                  <div
+                    key={pr.exerciseId}
+                    className="flex items-center justify-between p-2.5 rounded-lg bg-[#F7F7F7]"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium text-[#2D3648] text-sm truncate">
+                        {pr.exerciseName}
+                      </p>
+                      <p className="text-[10px] text-[#AFAFAF]">
+                        {pr.muscleGroup} · {new Date(pr.maxWeightDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0 ml-3">
+                      <p className="font-black text-[#FF8C42] text-lg">
+                        {pr.maxWeight} <span className="text-xs font-medium">kg</span>
+                      </p>
+                      <p className="text-[10px] text-[#AFAFAF]">
+                        × {pr.maxWeightReps} reps
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}

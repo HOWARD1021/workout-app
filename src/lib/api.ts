@@ -170,9 +170,23 @@ export interface TrendsData {
   }>;
 }
 
+export interface ExercisePR {
+  exerciseId: string;
+  exerciseName: string;
+  muscleGroup: string;
+  maxWeight: number;
+  maxWeightReps: number;
+  maxWeightDate: string;
+  maxVolume: number;
+  maxVolumeWeight: number;
+  maxVolumeReps: number;
+  maxVolumeDate: string;
+}
+
 export const analyticsApi = {
   muscleGroups: () => fetchApi<MuscleGroupData[]>("/analytics/muscle-groups"),
   trends: () => fetchApi<TrendsData>("/analytics/trends"),
+  prs: () => fetchApi<ExercisePR[]>("/analytics/prs"),
 };
 
 // Achievements
