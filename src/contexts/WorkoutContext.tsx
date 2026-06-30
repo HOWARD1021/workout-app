@@ -312,9 +312,12 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       templateExercises.length > 0 &&
       !templateLoaded
     ) {
-      const blocks: ExerciseBlock[] = templateExercises.map((te, index) => ({
+      const blocks: ExerciseBlock[] = templateExercises.map((te, index) => {
+        // Look up full exercise data (with nameZh, imageUrl, gifUrl) from the exercise list
+        const fullExercise = exercises.find((e) => e.id === te.exercise?.id);
+        return {
         id: `block-${te.exercise?.id || index}-${Date.now()}`,
-        exercise: {
+        exercise: fullExercise || {
           id: te.exercise?.id || "",
           name: te.exercise?.name || "",
           nameZh: null,
@@ -332,7 +335,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
           reps: te.defaultReps || null,
           completed: false,
         })),
-      }));
+      };
+      });
       setExerciseBlocks(blocks);
       setTemplateLoaded(true);
       updateTemplateUsage(templateId);

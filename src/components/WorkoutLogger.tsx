@@ -103,7 +103,12 @@ function SortableExerciseCard({
             <GripVertical className="h-5 w-5 text-[#8e8e93]" />
           </button>
           <Dumbbell className="h-5 w-5 text-[#248a3d]" />
-          <span className="flex-1 truncate">{block.exercise.nameZh || block.exercise.name}</span>
+          <span className="flex-1 truncate">
+            {block.exercise.nameZh || block.exercise.name}
+          </span>
+          {block.exercise.nameZh && (
+            <span className="text-xs text-[#8e8e93] shrink-0">{block.exercise.name}</span>
+          )}
           <button
             onClick={() => setShowNote(!showNote)}
             className={`p-1.5 rounded-md transition-colors ${

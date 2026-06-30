@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession, signOut } from "@/lib/auth-client";
-import { LogOut, User, Crown } from "lucide-react";
+import { LogOut, User, Crown, Globe } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n";
@@ -12,7 +12,7 @@ export default function UserMenu() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { locale } = useI18n();
+  const { locale, setLocale } = useI18n();
   const isZh = locale === "zh-TW";
 
   // Close menu when clicking outside
@@ -79,6 +79,16 @@ export default function UserMenu() {
           >
             <Crown className="w-4 h-4" />
             {isZh ? "升級 Pro" : "Upgrade to Pro"}
+          </button>
+          <button
+            onClick={() => {
+              setLocale(locale === "zh-TW" ? "en" : "zh-TW");
+              setOpen(false);
+            }}
+            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[#111111] transition-colors hover:bg-[#f2f2f7]"
+          >
+            <Globe className="w-4 h-4" />
+            {locale === "zh-TW" ? "English" : "中文"}
           </button>
           <button
             onClick={async () => {
