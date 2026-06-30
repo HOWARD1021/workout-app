@@ -67,7 +67,7 @@ function SortableExerciseCard({
   toggleSetComplete: (blockIndex: number, setIndex: number) => void;
   deleteSet: (blockIndex: number, setIndex: number) => void;
   addSet: (blockIndex: number) => void;
-  onViewExercise: (name: string, muscleGroup: string | null) => void;
+  onViewExercise: (name: string, muscleGroup: string | null, gifUrl?: string | null, imageUrl?: string | null) => void;
   onUpdateBlockNote: (blockIndex: number, note: string) => void;
 }) {
   const [showNote, setShowNote] = useState(!!block.note);
@@ -103,7 +103,7 @@ function SortableExerciseCard({
             <GripVertical className="h-5 w-5 text-[#8e8e93]" />
           </button>
           <Dumbbell className="h-5 w-5 text-[#248a3d]" />
-          <span className="flex-1">{block.exercise.name}</span>
+          <span className="flex-1 truncate">{block.exercise.nameZh || block.exercise.name}</span>
           <button
             onClick={() => setShowNote(!showNote)}
             className={`p-1.5 rounded-md transition-colors ${
@@ -116,7 +116,7 @@ function SortableExerciseCard({
             <MessageSquare className="h-4 w-4" />
           </button>
           <button
-            onClick={() => onViewExercise(block.exercise.name, block.exercise.muscleGroup)}
+            onClick={() => onViewExercise(block.exercise.nameZh || block.exercise.name, block.exercise.muscleGroup, block.exercise.gifUrl, block.exercise.imageUrl)}
             className="rounded-md p-1.5 text-[#8e8e93] transition-colors hover:bg-[#e9f8ee] hover:text-[#248a3d]"
             title="查看動作"
           >
@@ -292,7 +292,9 @@ export default function WorkoutLogger() {
     open: boolean;
     name: string;
     muscleGroup: string | null;
-  }>({ open: false, name: "", muscleGroup: null });
+    gifUrl: string | null;
+    imageUrl: string | null;
+  }>({ open: false, name: "", muscleGroup: null, gifUrl: null, imageUrl: null });
   const [notifPermission, setNotifPermission] = useState<string>(
     typeof window !== "undefined" && "Notification" in window
       ? Notification.permission
@@ -324,8 +326,8 @@ export default function WorkoutLogger() {
     }
   };
 
-  const openImageDialog = (name: string, muscleGroup: string | null) => {
-    setImageDialog({ open: true, name, muscleGroup });
+  const openImageDialog = (name: string, muscleGroup: string | null, gifUrl?: string | null, imageUrl?: string | null) => {
+    setImageDialog({ open: true, name, muscleGroup, gifUrl: gifUrl || null, imageUrl: imageUrl || null });
   };
 
   // DnD sensors
@@ -363,6 +365,7 @@ export default function WorkoutLogger() {
   const filteredExercises = exercises.filter(
     (e) =>
       e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (e.nameZh || "").includes(searchQuery) ||
       (e.muscleGroup || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -571,6 +574,8 @@ export default function WorkoutLogger() {
         onOpenChange={(open) => setImageDialog((prev) => ({ ...prev, open }))}
         exerciseName={imageDialog.name}
         muscleGroup={imageDialog.muscleGroup}
+        gifUrl={imageDialog.gifUrl}
+        imageUrl={imageDialog.imageUrl}
       />
 
       {/* Exercise Picker Dialog */}
@@ -622,8 +627,13 @@ export default function WorkoutLogger() {
                         className="w-full justify-start text-[#111111] hover:bg-[#f2f2f7]"
                         onClick={() => handleAddExercise(exercise)}
                       >
-                        <Dumbbell className="mr-2 h-4 w-4 text-[#8e8e93]" />
-                        {exercise.name}
+                        {exercise.imageUrl ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img src={exercise.imageUrl} alt="" className="w-8 h-8 rounded mr-2 object-cover" />
+                        ) : (
+                          <Dumbbell className="mr-2 h-4 w-4 text-[#8e8e93]" />
+                        )}
+                        <span className="truncate">{exercise.nameZh || exercise.name}</span>
                       </Button>
                     ))}
                   </div>

@@ -96,8 +96,11 @@ export const templatesApi = {
 export interface Exercise {
   id: string;
   name: string;
+  nameZh: string | null;
   type: string | null;
   muscleGroup: string | null;
+  imageUrl: string | null;
+  gifUrl: string | null;
   isCustom: boolean | null;
   createdAt: string | null;
   deletedAt: string | null;

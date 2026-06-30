@@ -317,8 +317,11 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         exercise: {
           id: te.exercise?.id || "",
           name: te.exercise?.name || "",
+          nameZh: null,
           type: te.exercise?.type || null,
           muscleGroup: te.exercise?.muscleGroup || null,
+          imageUrl: null,
+          gifUrl: null,
           isCustom: null,
           createdAt: null,
           deletedAt: null,

@@ -58,12 +58,15 @@ export const exercises = sqliteTable("exercises", {
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull().unique(),
+  nameZh: text("name_zh"),
   type: text("type", {
     enum: ["Strength", "Cardio", "Flexibility", "Other"],
   }),
   muscleGroup: text("muscle_group", {
     enum: ["Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Full Body", "Other"],
   }),
+  imageUrl: text("image_url"),
+  gifUrl: text("gif_url"),
   isCustom: integer("is_custom", { mode: "boolean" }).default(true),
   createdAt: text("created_at").default(sql`(datetime('now'))`),
   deletedAt: text("deleted_at"),

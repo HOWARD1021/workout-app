@@ -21,6 +21,8 @@ interface ExerciseImageDialogProps {
   onOpenChange: (open: boolean) => void;
   exerciseName: string;
   muscleGroup?: string | null;
+  gifUrl?: string | null;
+  imageUrl?: string | null;
 }
 
 export default function ExerciseImageDialog({
@@ -28,6 +30,8 @@ export default function ExerciseImageDialog({
   onOpenChange,
   exerciseName,
   muscleGroup,
+  gifUrl,
+  imageUrl,
 }: ExerciseImageDialogProps) {
   const [activeTab, setActiveTab] = useState<Tab>("demo");
   const [demoError, setDemoError] = useState(false);
@@ -87,7 +91,21 @@ export default function ExerciseImageDialog({
 
         {/* Image display */}
         <div className="relative w-full aspect-square bg-[#F7F7F7] rounded-lg overflow-hidden flex items-center justify-center">
-          {hasError ? (
+          {activeTab === "demo" && gifUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={gifUrl}
+              alt={`${exerciseName} - 動作示範`}
+              className="w-full h-full object-contain p-2"
+            />
+          ) : activeTab === "demo" && imageUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={imageUrl}
+              alt={`${exerciseName} - 動作示範`}
+              className="w-full h-full object-contain p-2"
+            />
+          ) : hasError ? (
             <div className="text-center text-[#AFAFAF] p-6">
               <Dumbbell className="h-12 w-12 mx-auto mb-3 opacity-30" />
               <p className="text-sm">圖片尚未生成</p>
