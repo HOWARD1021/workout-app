@@ -2,7 +2,6 @@
 
 import WorkoutDashboard from "@/components/WorkoutDashboard";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
-import UserMenu from "@/components/UserMenu";
 import DuckMascot from "@/components/DuckMascot";
 import { useSession } from "@/lib/auth-client";
 import { useTranslation } from "@/lib/i18n";
@@ -46,11 +45,6 @@ export default function Home() {
   }
 
   return (
-    <>
-      <div className="fixed top-3 right-4 z-50">
-        <UserMenu />
-      </div>
-      <WorkoutDashboard />
-    </>
+    <WorkoutDashboard />
   );
 }

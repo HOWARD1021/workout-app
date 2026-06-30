@@ -12,7 +12,6 @@ import {
   Clock,
   ArrowLeft,
   Timer,
-  X,
   Trash2,
   GripVertical,
   Eye,
@@ -92,25 +91,25 @@ function SortableExerciseCard({
     <Card
       ref={setNodeRef}
       style={style}
-      className={`bg-white border-2 border-[#E5E5E5] mb-4 ${isDragging ? "shadow-lg" : ""}`}
+      className={`mb-4 gap-0 overflow-hidden bg-white py-0 ${isDragging ? "shadow-lg" : ""}`}
     >
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-[#2D3648]">
+      <CardHeader className="border-b border-[#ededf0] px-4 py-3">
+        <CardTitle className="flex items-center gap-2 text-base text-[#111111]">
           <button
             {...attributes}
             {...listeners}
-            className="touch-none cursor-grab active:cursor-grabbing p-1 -ml-1 hover:bg-gray-100 rounded"
+            className="-ml-1 touch-none cursor-grab rounded-lg p-1 active:cursor-grabbing active:bg-[#f2f2f7]"
           >
-            <GripVertical className="h-5 w-5 text-[#AFAFAF]" />
+            <GripVertical className="h-5 w-5 text-[#8e8e93]" />
           </button>
-          <Dumbbell className="h-5 w-5" />
+          <Dumbbell className="h-5 w-5 text-[#248a3d]" />
           <span className="flex-1">{block.exercise.name}</span>
           <button
             onClick={() => setShowNote(!showNote)}
             className={`p-1.5 rounded-md transition-colors ${
               block.note
-                ? "bg-[#FFF8E1] text-[#FF8C42]"
-                : "hover:bg-[#F7F7F7] text-[#AFAFAF] hover:text-[#2D3648]"
+                ? "bg-[#fff3df] text-[#b25b00]"
+                : "text-[#8e8e93] hover:bg-[#f2f2f7] hover:text-[#111111]"
             }`}
             title="筆記"
           >
@@ -118,14 +117,14 @@ function SortableExerciseCard({
           </button>
           <button
             onClick={() => onViewExercise(block.exercise.name, block.exercise.muscleGroup)}
-            className="p-1.5 rounded-md hover:bg-[#E8F5E9] text-[#AFAFAF] hover:text-[#58CC02] transition-colors"
+            className="rounded-md p-1.5 text-[#8e8e93] transition-colors hover:bg-[#e9f8ee] hover:text-[#248a3d]"
             title="查看動作"
           >
             <Eye className="h-4 w-4" />
           </button>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 py-3">
         {/* Exercise Note */}
         {showNote && (
           <div className="mb-3">
@@ -133,14 +132,14 @@ function SortableExerciseCard({
               placeholder="筆記：握距、節奏、注意事項..."
               value={block.note || ""}
               onChange={(e) => onUpdateBlockNote(blockIndex, e.target.value)}
-              className="w-full text-sm border-2 border-[#E5E5E5] focus:border-[#58CC02] rounded-lg p-2 resize-none outline-none transition-colors"
+              className="w-full resize-none rounded-xl border-0 bg-[#f2f2f7] p-3 text-sm outline-none transition-colors focus:bg-white focus:ring-2 focus:ring-[#34c759]/20"
               rows={2}
             />
           </div>
         )}
 
         {/* Table Header */}
-        <div className="grid grid-cols-[40px_1fr_80px_80px_50px] gap-2 mb-2 text-sm text-[#AFAFAF] font-medium">
+        <div className="mb-2 grid grid-cols-[34px_1fr_72px_72px_44px] gap-2 text-xs font-semibold uppercase tracking-[0.06em] text-[#8e8e93]">
           <div>Set</div>
           <div>Previous</div>
           <div className="text-center">kg</div>
@@ -154,9 +153,9 @@ function SortableExerciseCard({
         {block.sets.map((set, setIndex) => (
           <div
             key={setIndex}
-            className={`group relative grid grid-cols-[40px_1fr_80px_80px_50px] gap-2 mb-2 items-center transition-all duration-200 ${
+            className={`group relative mb-2 grid grid-cols-[34px_1fr_72px_72px_44px] items-center gap-2 rounded-xl transition-all duration-200 ${
               set.completed
-                ? "bg-[#C8F7C5] rounded-lg p-2 -mx-1 border-2 border-[#58CC02]"
+                ? "bg-[#e9f8ee] p-2 -mx-1"
                 : ""
             }`}
           >
@@ -171,7 +170,7 @@ function SortableExerciseCard({
             )}
             <div
               className={`font-bold ${
-                set.completed ? "text-[#58CC02]" : "text-[#2D3648]"
+                set.completed ? "text-[#248a3d]" : "text-[#111111]"
               }`}
             >
               {set.set_order}
@@ -179,8 +178,8 @@ function SortableExerciseCard({
             <div
               className={`text-sm ${
                 set.completed
-                  ? "text-[#58CC02] line-through"
-                  : "text-[#AFAFAF]"
+                  ? "text-[#248a3d] line-through"
+                  : "text-[#8e8e93]"
               }`}
             >
               {getPrevious(block.exercise.id)}
@@ -195,8 +194,8 @@ function SortableExerciseCard({
               onFocus={(e) => e.target.select()}
               className={`h-10 text-center border-2 ${
                 set.completed
-                  ? "border-[#58CC02] bg-white text-[#58CC02] font-bold"
-                  : "border-[#E5E5E5] focus:border-[#58CC02]"
+                  ? "bg-white text-[#248a3d] font-semibold"
+                  : "bg-[#f2f2f7] focus:bg-white"
               }`}
               disabled={set.completed}
             />
@@ -210,8 +209,8 @@ function SortableExerciseCard({
               onFocus={(e) => e.target.select()}
               className={`h-10 text-center border-2 ${
                 set.completed
-                  ? "border-[#58CC02] bg-white text-[#58CC02] font-bold"
-                  : "border-[#E5E5E5] focus:border-[#58CC02]"
+                  ? "bg-white text-[#248a3d] font-semibold"
+                  : "bg-[#f2f2f7] focus:bg-white"
               }`}
               disabled={set.completed}
             />
@@ -220,8 +219,8 @@ function SortableExerciseCard({
               size="icon"
               className={
                 set.completed
-                  ? "bg-[#58CC02] hover:bg-[#46A302] text-white shadow-md"
-                  : "border-2 border-[#E5E5E5] text-[#AFAFAF] hover:border-[#58CC02] hover:text-[#58CC02]"
+                  ? "bg-[#34c759] hover:bg-[#2fb84f] text-white"
+                  : "border-0 bg-[#f2f2f7] text-[#8e8e93] hover:bg-[#e9f8ee] hover:text-[#248a3d]"
               }
               onClick={() => toggleSetComplete(blockIndex, setIndex)}
             >
@@ -233,9 +232,8 @@ function SortableExerciseCard({
         {/* Rest Timer Placeholder */}
         <div className="flex justify-center my-3">
           <Button
-            variant="outline"
-            size="sm"
-            className="border-2 border-[#E5E5E5] text-[#AFAFAF]"
+          size="sm"
+          className="h-8 rounded-full bg-[#f2f2f7] px-3 text-[#6f6f78] hover:bg-[#e9e9ee]"
           >
             <Clock className="h-4 w-4 mr-1" />
             1:00
@@ -244,8 +242,8 @@ function SortableExerciseCard({
 
         {/* Add Set Button */}
         <Button
-          variant="outline"
-          className="w-full border-2 border-[#58CC02] text-[#58CC02] hover:bg-[#E8F5E9]"
+          variant="secondary"
+          className="w-full bg-[#f2f2f7] text-[#111111] hover:bg-[#e9e9ee]"
           onClick={() => addSet(blockIndex)}
         >
           <Plus className="h-4 w-4 mr-1" />
@@ -379,9 +377,9 @@ export default function WorkoutLogger() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F7F7F7]">
+    <div className="ios-page">
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
+      <div className="sticky top-0 z-10 border-b border-[#d7d7dc]/80 bg-[#f9f9fb]/90 backdrop-blur-xl">
         <div className="max-w-2xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <Button
@@ -392,12 +390,12 @@ export default function WorkoutLogger() {
               <ArrowLeft className="h-4 w-4 mr-1" />
               Back
             </Button>
-            <div className="flex items-center gap-2 text-[#2D3648]">
+            <div className="flex items-center gap-2 rounded-full bg-[#ededf0] px-3 py-1.5 text-[#111111]">
               <Clock className="h-4 w-4" />
               <span className="font-mono text-lg">{formatTime(elapsedTime)}</span>
             </div>
             <Button
-              className="bg-[#58CC02] hover:bg-[#46A302] text-white"
+              className="bg-[#111111] text-white hover:bg-[#242424]"
               onClick={finishWorkout}
               disabled={exerciseBlocks.length === 0}
             >
@@ -408,8 +406,8 @@ export default function WorkoutLogger() {
       </div>
 
       {/* Workout Title Card */}
-      <div className="max-w-2xl mx-auto px-4 py-4">
-        <Card className="bg-white border-2 border-[#E5E5E5] mb-4">
+      <div className="mx-auto max-w-2xl px-4 py-4">
+        <Card className="mb-4 gap-0 py-0">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <DuckMascot 
@@ -418,13 +416,13 @@ export default function WorkoutLogger() {
                 animate={false} 
               />
               <div>
-                <h2 className="text-xl font-bold text-[#2D3648]">
+                <h2 className="text-xl font-bold text-[#111111]">
                   {templateInfo ? templateInfo.name : "自由訓練"}
                 </h2>
-                <p className="text-[#AFAFAF] text-sm">
+                <p className="text-[#6f6f78] text-sm">
                   {startTime?.toLocaleDateString()} - {formatTime(elapsedTime)}
                   {templateInfo?.muscleGroup && (
-                    <span className="ml-2 px-2 py-0.5 rounded-full bg-[#E8F5E9] text-[#58CC02] text-xs">
+                    <span className="ml-2 rounded-full bg-[#e9f8ee] px-2 py-0.5 text-xs text-[#248a3d]">
                       {templateInfo.muscleGroup}
                     </span>
                   )}
@@ -435,10 +433,10 @@ export default function WorkoutLogger() {
         </Card>
 
         {/* Rest Time Settings */}
-        <Card className="bg-white border-2 border-[#E5E5E5] mb-4">
+        <Card className="mb-4 gap-0 py-0">
           <CardContent className="p-3 space-y-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[#2D3648]">
+              <div className="flex items-center gap-2 text-[#111111]">
                 <Timer className="h-4 w-4" />
                 <span className="text-sm font-medium">預設休息時間</span>
               </div>
@@ -450,8 +448,8 @@ export default function WorkoutLogger() {
                     size="sm"
                     className={`px-2 py-1 text-xs ${
                       defaultRestTime === time
-                        ? "bg-[#58CC02] text-white hover:bg-[#46A302]"
-                        : "text-[#AFAFAF] hover:text-[#2D3648]"
+                        ? "bg-[#111111] text-white hover:bg-[#242424]"
+                        : "text-[#6f6f78] hover:bg-[#f2f2f7] hover:text-[#111111]"
                     }`}
                     onClick={() => setDefaultRestTime(time)}
                   >
@@ -461,14 +459,14 @@ export default function WorkoutLogger() {
               </div>
             </div>
             {/* Notification Permission */}
-            <div className="flex items-center justify-between pt-1 border-t border-[#F0F0F0]">
+            <div className="flex items-center justify-between border-t border-[#ededf0] pt-2">
               <div className="flex items-center gap-2">
                 {notifPermission === "granted" ? (
-                  <Bell className="h-4 w-4 text-[#58CC02]" />
+                  <Bell className="h-4 w-4 text-[#248a3d]" />
                 ) : (
-                  <BellOff className="h-4 w-4 text-[#AFAFAF]" />
+                  <BellOff className="h-4 w-4 text-[#8e8e93]" />
                 )}
-                <span className="text-sm text-[#2D3648]">
+                <span className="text-sm text-[#111111]">
                   {notifPermission === "granted"
                     ? "通知已開啟"
                     : notifPermission === "denied"
@@ -480,14 +478,14 @@ export default function WorkoutLogger() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-xs bg-[#58CC02] text-white hover:bg-[#46A302] px-3 py-1"
+                  className="bg-[#111111] px-3 py-1 text-xs text-white hover:bg-[#242424]"
                   onClick={handleEnableNotifications}
                 >
                   開啟通知
                 </Button>
               )}
               {notifPermission === "denied" && (
-                <span className="text-xs text-[#AFAFAF]">
+                <span className="text-xs text-[#8e8e93]">
                   請到系統設定開啟
                 </span>
               )}
@@ -495,7 +493,7 @@ export default function WorkoutLogger() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-xs bg-[#1CB0F6] text-white hover:bg-[#0A9AD6] px-3 py-1"
+                  className="bg-[#ededf0] px-3 py-1 text-xs text-[#111111] hover:bg-[#e0e0e6]"
                   onClick={() => startRestTimer(3)}
                 >
                   3s 測試
@@ -534,7 +532,7 @@ export default function WorkoutLogger() {
 
         {/* Add Exercise Button */}
         <Button
-          className="w-full bg-[#1CB0F6] hover:bg-[#0A9AD6] text-white py-6"
+          className="w-full bg-white py-6 text-[#111111] hover:bg-[#f7f7fa]"
           onClick={() => setShowExercisePicker(true)}
         >
           <Plus className="h-5 w-5 mr-2" />
@@ -556,7 +554,7 @@ export default function WorkoutLogger() {
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
             <button
               onClick={() => setIsRestTimerExpanded(true)}
-              className="bg-[#1CB0F6] text-white rounded-full shadow-lg px-4 py-2 flex items-center gap-2 hover:bg-[#0A9AD6] transition-colors"
+              className="flex items-center gap-2 rounded-full bg-[#111111] px-4 py-2 text-white shadow-lg transition-colors hover:bg-[#242424]"
             >
               <Timer className="h-5 w-5" />
               <span className="font-bold font-mono text-lg">
@@ -587,7 +585,7 @@ export default function WorkoutLogger() {
               placeholder="Search exercises..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="border-2 border-[#E5E5E5] focus:border-[#58CC02]"
+              className="bg-[#f2f2f7] focus:bg-white"
             />
           </div>
 
@@ -599,8 +597,8 @@ export default function WorkoutLogger() {
                 onClick={() => setSearchQuery(mg === "All" ? "" : mg)}
                 className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
                   (mg === "All" && !searchQuery) || searchQuery === mg
-                    ? "bg-[#58CC02] text-white"
-                    : "bg-gray-100 text-[#2D3648] hover:bg-gray-200"
+                    ? "bg-[#111111] text-white"
+                    : "bg-[#f2f2f7] text-[#111111] hover:bg-[#e9e9ee]"
                 }`}
               >
                 {mg}
@@ -612,7 +610,7 @@ export default function WorkoutLogger() {
             <div className="space-y-4">
               {Object.entries(groupedExercises).map(([group, groupExercises]) => (
                 <div key={group}>
-                  <h3 className="text-sm font-medium text-[#AFAFAF] mb-2 flex items-center">
+                  <h3 className="mb-2 flex items-center text-sm font-medium text-[#8e8e93]">
                     <ChevronDown className="h-4 w-4 mr-1" />
                     {group}
                   </h3>
@@ -621,10 +619,10 @@ export default function WorkoutLogger() {
                       <Button
                         key={exercise.id}
                         variant="ghost"
-                        className="w-full justify-start text-[#2D3648] hover:bg-[#F7F7F7]"
+                        className="w-full justify-start text-[#111111] hover:bg-[#f2f2f7]"
                         onClick={() => handleAddExercise(exercise)}
                       >
-                        <Dumbbell className="h-4 w-4 mr-2 text-[#AFAFAF]" />
+                        <Dumbbell className="mr-2 h-4 w-4 text-[#8e8e93]" />
                         {exercise.name}
                       </Button>
                     ))}

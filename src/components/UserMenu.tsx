@@ -5,6 +5,7 @@ import { LogOut, User, Crown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n";
+import Image from "next/image";
 
 export default function UserMenu() {
   const { data: session, isPending } = useSession();
@@ -41,23 +42,25 @@ export default function UserMenu() {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setOpen(!open)}
-        className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#58CC02] hover:border-[#46A302] transition-colors"
+        className="h-10 w-10 overflow-hidden rounded-full bg-white ring-1 ring-black/5 transition active:scale-95"
       >
         {user.image ? (
-          <img
+          <Image
             src={user.image}
             alt={user.name}
-            className="w-full h-full object-cover"
+            width={40}
+            height={40}
+            className="h-full w-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-[#58CC02] flex items-center justify-center">
-            <User className="w-4 h-4 text-white" />
+          <div className="flex h-full w-full items-center justify-center bg-[#111111]">
+            <User className="h-4 w-4 text-white" />
           </div>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-11 w-56 bg-white rounded-xl border-2 border-gray-200 shadow-lg z-50 overflow-hidden">
+        <div className="absolute right-0 top-12 z-50 w-56 overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
           {/* User info */}
           <div className="px-4 py-3 border-b border-gray-100">
             <p className="font-bold text-sm text-gray-800 truncate">
@@ -72,7 +75,7 @@ export default function UserMenu() {
               router.push("/pricing");
               setOpen(false);
             }}
-            className="w-full px-4 py-3 text-left text-sm font-medium text-[#FF8C42] hover:bg-orange-50 flex items-center gap-2 transition-colors"
+            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[#111111] transition-colors hover:bg-[#f2f2f7]"
           >
             <Crown className="w-4 h-4" />
             {isZh ? "升級 Pro" : "Upgrade to Pro"}

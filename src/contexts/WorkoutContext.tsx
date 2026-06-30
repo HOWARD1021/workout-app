@@ -187,9 +187,10 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
   // ── Register Service Worker ──
   useEffect(() => {
+    if (process.env.NODE_ENV !== "production") return;
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
-        .register("/sw.js")
+        .register("/sw.js", { updateViaCache: "none" })
         .then((reg) => { swRef.current = reg; })
         .catch((err) => console.error("SW registration failed:", err));
     }
