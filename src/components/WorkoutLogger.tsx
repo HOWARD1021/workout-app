@@ -267,6 +267,7 @@ export default function WorkoutLogger() {
     exerciseBlocks,
     startTime,
     elapsedTime,
+    isFinishing,
     templateInfo,
     exercises,
     getPrevious,
@@ -404,10 +405,11 @@ export default function WorkoutLogger() {
             </div>
             <Button
               className="bg-[#111111] text-white hover:bg-[#242424]"
-              onClick={finishWorkout}
-              disabled={exerciseBlocks.length === 0}
+              onClick={() => void finishWorkout()}
+              disabled={exerciseBlocks.length === 0 || isFinishing}
+              aria-busy={isFinishing}
             >
-              Finish
+              {isFinishing ? "儲存中..." : "Finish"}
             </Button>
           </div>
         </div>
@@ -632,9 +634,9 @@ export default function WorkoutLogger() {
                         className="w-full justify-start text-[#111111] hover:bg-[#f2f2f7]"
                         onClick={() => handleAddExercise(exercise)}
                       >
-                        {exercise.imageUrl ? (
+                        {exercise.imageUrl || exercise.gifUrl ? (
                           /* eslint-disable-next-line @next/next/no-img-element */
-                          <img src={exercise.imageUrl} alt="" className="w-8 h-8 rounded mr-2 object-cover" />
+                          <img src={exercise.imageUrl || exercise.gifUrl || ""} alt="" className="w-8 h-8 rounded mr-2 object-cover" />
                         ) : (
                           <Dumbbell className="mr-2 h-4 w-4 text-[#8e8e93]" />
                         )}

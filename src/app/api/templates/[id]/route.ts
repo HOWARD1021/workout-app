@@ -43,8 +43,11 @@ export async function GET(
         exercise: {
           id: exercises.id,
           name: exercises.name,
+          nameZh: exercises.nameZh,
           type: exercises.type,
           muscleGroup: exercises.muscleGroup,
+          imageUrl: exercises.imageUrl,
+          gifUrl: exercises.gifUrl,
         },
       })
       .from(workoutTemplateExercises)

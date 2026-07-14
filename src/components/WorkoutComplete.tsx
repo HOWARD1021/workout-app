@@ -37,31 +37,32 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
   };
 
   const fireConfetti = useCallback(() => {
-    const duration = 3000;
-    const end = Date.now() + duration;
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
 
     const colors = ["#58CC02", "#1CB0F6", "#FF8C42", "#FF4B4B", "#CE82FF"];
+    const sharedOptions = {
+      particleCount: 40,
+      spread: 55,
+      ticks: 120,
+      colors,
+      disableForReducedMotion: true,
+    };
 
-    (function frame() {
-      confetti({
-        particleCount: 5,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0 },
-        colors,
-      });
-      confetti({
-        particleCount: 5,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1 },
-        colors,
-      });
-
-      if (Date.now() < end) {
-        requestAnimationFrame(frame);
-      }
-    })();
+    confetti({
+      ...sharedOptions,
+      angle: 60,
+      origin: { x: 0, y: 0.65 },
+    });
+    confetti({
+      ...sharedOptions,
+      angle: 120,
+      origin: { x: 1, y: 0.65 },
+    });
   }, []);
 
   useEffect(() => {
@@ -100,15 +101,18 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
     t("complete.fitnessPro"),
     t("complete.amazing"),
   ];
-  const randomEncouragement =
-    encouragements[Math.floor(Math.random() * encouragements.length)];
+  const encouragement =
+    encouragements[
+      Math.abs(summary.totalSets + summary.totalVolume + summary.duration) %
+        encouragements.length
+    ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#58CC02] to-[#46A302] flex flex-col items-center justify-center p-4">
       {/* Celebration Header */}
       <div className="text-center mb-6">
         <h1 className="text-4xl font-black text-white mb-2">
-          {randomEncouragement}
+          {encouragement}
         </h1>
         <p className="text-white/80 text-lg">{t("complete.workoutComplete")}</p>
       </div>

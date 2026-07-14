@@ -51,10 +51,11 @@ export const workoutsApi = {
       reps: number | null;
       note?: string;
     }>;
-  }) =>
+  }, options?: { signal?: AbortSignal }) =>
     fetchApi<Workout>("/workouts", {
       method: "POST",
       body: JSON.stringify(data),
+      signal: options?.signal,
     }),
 };
 
@@ -146,8 +147,11 @@ export interface TemplateExercise {
   exercise: {
     id: string;
     name: string;
+    nameZh: string | null;
     type: string | null;
     muscleGroup: string | null;
+    imageUrl: string | null;
+    gifUrl: string | null;
   } | null;
 }
 

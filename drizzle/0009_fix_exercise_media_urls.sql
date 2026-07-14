@@ -1,9 +1,5 @@
--- Exercise i18n (Chinese names) + image/gif URLs
--- Source: hasaneyldrm/exercises-dataset on GitHub
-
-ALTER TABLE exercises ADD COLUMN name_zh TEXT;
-ALTER TABLE exercises ADD COLUMN image_url TEXT;
-ALTER TABLE exercises ADD COLUMN gif_url TEXT;
+-- Fix exercise media URLs to use Cloudflare R2-hosted GIF assets
+-- image_url intentionally points to the same GIF so exercise lists always have a visual preview.
 
 UPDATE exercises SET name_zh = '15度窄距繩索飛鳥', image_url = 'https://pub-ede481040d4c45818baf14bfb47b2b2d.r2.dev/gifs/FVmZVhk.gif', gif_url = 'https://pub-ede481040d4c45818baf14bfb47b2b2d.r2.dev/gifs/FVmZVhk.gif' WHERE name = '15° Cable Fly (Narrow)';
 UPDATE exercises SET name_zh = '30度上斜啞鈴推舉', image_url = 'https://pub-ede481040d4c45818baf14bfb47b2b2d.r2.dev/gifs/ns0SIbU.gif', gif_url = 'https://pub-ede481040d4c45818baf14bfb47b2b2d.r2.dev/gifs/ns0SIbU.gif' WHERE name = '30° Incline Dumbbell Press';

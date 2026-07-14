@@ -106,9 +106,9 @@ export default function ExercisesPage() {
                     key={exercise.id}
                     className="flex items-center gap-3 p-3 rounded-lg bg-[#F7F7F7]"
                   >
-                    {exercise.imageUrl ? (
+                    {exercise.imageUrl || exercise.gifUrl ? (
                       <img
-                        src={exercise.imageUrl}
+                        src={exercise.imageUrl || exercise.gifUrl || ""}
                         alt={exercise.name}
                         className="w-12 h-12 rounded-lg object-cover bg-white"
                       />

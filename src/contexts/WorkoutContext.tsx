@@ -49,6 +49,7 @@ interface WorkoutContextValue {
   // State
   isRestored: boolean;
   isWorkoutActive: boolean;
+  isFinishing: boolean;
   exerciseBlocks: ExerciseBlock[];
   startTime: Date | null;
   elapsedTime: number;
@@ -71,7 +72,7 @@ interface WorkoutContextValue {
 
   // Actions
   startWorkout: (templateId?: string | null) => void;
-  finishWorkout: () => Promise<void>;
+  finishWorkout: () => Promise<boolean>;
   discardWorkout: () => void;
   clearCompletedSummary: () => void;
   addExercise: (exercise: Exercise) => Promise<void>;
@@ -99,6 +100,29 @@ interface WorkoutContextValue {
 const STORAGE_KEY = "workout-active-session";
 const TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 hours
 const AUTO_FINISH_MS = 5 * 60 * 1000;   // 5 min after dialog
+const PR_LOOKUP_TIMEOUT_MS = 1_500;
+const WORKOUT_SAVE_TIMEOUT_MS = 15_000;
+
+function resolveWithin<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  fallback: T
+): Promise<T> {
+  return new Promise((resolve) => {
+    const timeout = setTimeout(() => resolve(fallback), timeoutMs);
+
+    promise.then(
+      (value) => {
+        clearTimeout(timeout);
+        resolve(value);
+      },
+      () => {
+        clearTimeout(timeout);
+        resolve(fallback);
+      }
+    );
+  });
+}
 
 interface PersistedWorkout {
   exerciseBlocks: ExerciseBlock[];
@@ -138,6 +162,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
   // ── Core workout state ──
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false);
   const [exerciseBlocks, setExerciseBlocks] = useState<ExerciseBlock[]>([]);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -148,6 +173,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   const [showTimeoutPrompt, setShowTimeoutPrompt] = useState(false);
   const [isRestored, setIsRestored] = useState(false);
   const autoFinishTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const finishInProgressRef = useRef(false);
 
   // ── Exercise list ──
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -585,7 +611,9 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   }, [exerciseBlocks, elapsedTime]);
 
   const finishWorkout = useCallback(async () => {
-    if (!startTime) return;
+    if (!startTime || finishInProgressRef.current) return false;
+    finishInProgressRef.current = true;
+    setIsFinishing(true);
     const endTime = new Date();
 
     const logs: Array<{
@@ -611,19 +639,35 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       });
     });
 
-    try {
-      // Fetch current PRs BEFORE saving (so we compare against pre-workout bests)
-      let currentPRs: ExercisePR[] = [];
-      try {
-        currentPRs = await analyticsApi.prs();
-      } catch { /* ignore — PR detection is best-effort */ }
+    const saveAbortController = new AbortController();
+    const saveTimeout = setTimeout(
+      () => saveAbortController.abort(),
+      WORKOUT_SAVE_TIMEOUT_MS
+    );
 
-      await workoutsApi.create({
-        started_at: startTime.toISOString(),
-        ended_at: endTime.toISOString(),
-        template_id: templateId || undefined,
-        logs,
-      });
+    try {
+      // Start the best-effort PR lookup and required save together. A slow
+      // analytics query must never prevent the workout itself from saving.
+      const currentPRsPromise = resolveWithin<ExercisePR[]>(
+        analyticsApi.prs(),
+        PR_LOOKUP_TIMEOUT_MS,
+        []
+      );
+      const savePromise = workoutsApi.create(
+        {
+          started_at: startTime.toISOString(),
+          ended_at: endTime.toISOString(),
+          template_id: templateId || undefined,
+          logs,
+        },
+        {
+          signal: saveAbortController.signal,
+        }
+      );
+      const [, currentPRs] = await Promise.all([
+        savePromise,
+        currentPRsPromise,
+      ]);
 
       const summary = calculateSummary(currentPRs);
       stopRestTimer();
@@ -636,8 +680,15 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       if (summary.newPRs.length > 0) {
         toast.success(`🏆 ${summary.newPRs.length} 個新紀錄！`, { duration: 5000 });
       }
+      return true;
     } catch (error) {
       console.error("Failed to save workout:", error);
+      toast.error("儲存訓練失敗，請檢查連線後再試一次。");
+      return false;
+    } finally {
+      clearTimeout(saveTimeout);
+      finishInProgressRef.current = false;
+      setIsFinishing(false);
     }
   }, [startTime, exerciseBlocks, templateId, calculateSummary, stopRestTimer]);
 
@@ -824,6 +875,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   const value: WorkoutContextValue = {
     isRestored,
     isWorkoutActive,
+    isFinishing,
     exerciseBlocks,
     startTime,
     elapsedTime,
@@ -872,8 +924,13 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       {/* Timeout prompt — shown after 2 hours of activity */}
       {showTimeoutPrompt && isWorkoutActive && (
         <WorkoutTimeoutDialog
+          isFinishing={isFinishing}
           onContinue={() => setShowTimeoutPrompt(false)}
-          onFinish={() => finishWorkout().then(() => router.push("/log"))}
+          onFinish={() => {
+            void finishWorkout().then((saved) => {
+              if (saved) router.push("/log");
+            });
+          }}
           onDiscard={() => { discardWorkout(); router.push("/"); }}
         />
       )}
@@ -883,10 +940,12 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
 // ── Timeout dialog ─────────────────────────────────────
 function WorkoutTimeoutDialog({
+  isFinishing,
   onContinue,
   onFinish,
   onDiscard,
 }: {
+  isFinishing: boolean;
   onContinue: () => void;
   onFinish: () => void;
   onDiscard: () => void;
@@ -906,18 +965,22 @@ function WorkoutTimeoutDialog({
         <div className="space-y-2">
           <button
             onClick={onContinue}
+            disabled={isFinishing}
             className="w-full py-3 rounded-xl bg-[#58CC02] text-white font-bold shadow-[0_3px_0_0_#46A302] active:shadow-none active:translate-y-0.5 transition-all"
           >
             💪 繼續訓練
           </button>
           <button
             onClick={onFinish}
+            disabled={isFinishing}
+            aria-busy={isFinishing}
             className="w-full py-3 rounded-xl bg-[#1CB0F6] text-white font-bold shadow-[0_3px_0_0_#0A9AD6] active:shadow-none active:translate-y-0.5 transition-all"
           >
-            ✅ 結束並儲存
+            {isFinishing ? "儲存中..." : "✅ 結束並儲存"}
           </button>
           <button
             onClick={onDiscard}
+            disabled={isFinishing}
             className="w-full py-2.5 rounded-xl text-[#AFAFAF] text-sm font-medium hover:text-red-500 transition-colors"
           >
             放棄此次訓練
