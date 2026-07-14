@@ -1,8 +1,69 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { getDb, workouts, workoutLogs, exercises } from "@/lib/db";
-import { eq, isNull, desc, and } from "drizzle-orm";
+import {
+  getDb,
+  workouts,
+  workoutLogs,
+  exercises,
+  workoutTemplates,
+} from "@/lib/db";
+import { eq, isNull, desc, and, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+
+type WorkoutLogInput = {
+  exercise_id: string;
+  set_order: number;
+  weight: number | null;
+  reps: number | null;
+  note?: string;
+};
+
+async function sanitizeWorkoutLogs(
+  db: ReturnType<typeof getDb>,
+  logs: WorkoutLogInput[]
+) {
+  const uniqueExerciseIds = [
+    ...new Set(logs.map((log) => log.exercise_id).filter(Boolean)),
+  ];
+
+  if (uniqueExerciseIds.length === 0) {
+    return { logs: [] as WorkoutLogInput[], skippedLogs: 0 };
+  }
+
+  const existing = await db
+    .select({ id: exercises.id })
+    .from(exercises)
+    .where(
+      and(inArray(exercises.id, uniqueExerciseIds), isNull(exercises.deletedAt))
+    );
+
+  const validIds = new Set(existing.map((row) => row.id));
+  const sanitizedLogs = logs.filter(
+    (log) => log.exercise_id && validIds.has(log.exercise_id)
+  );
+
+  return {
+    logs: sanitizedLogs,
+    skippedLogs: logs.length - sanitizedLogs.length,
+  };
+}
+
+async function resolveTemplateId(
+  db: ReturnType<typeof getDb>,
+  templateId?: string
+) {
+  if (!templateId) return null;
+
+  const [template] = await db
+    .select({ id: workoutTemplates.id })
+    .from(workoutTemplates)
+    .where(
+      and(eq(workoutTemplates.id, templateId), isNull(workoutTemplates.deletedAt))
+    )
+    .limit(1);
+
+  return template?.id ?? null;
+}
 
 export async function GET(request: Request) {
   try {
@@ -65,36 +126,56 @@ export async function POST(request: Request) {
       ended_at: string;
       template_id?: string;
       note?: string;
-      logs?: Array<{ exercise_id: string; set_order: number; weight: number | null; reps: number | null; note?: string }>;
+      logs?: WorkoutLogInput[];
     };
 
-    // Create workout with user_id
-    const [workout] = await db
-      .insert(workouts)
-      .values({
-        userId: user.id,
-        startedAt: body.started_at,
-        endedAt: body.ended_at,
-        templateId: body.template_id || null,
-        note: body.note,
-      })
-      .returning();
+    const incomingLogs = body.logs ?? [];
+    const { logs, skippedLogs } = await sanitizeWorkoutLogs(db, incomingLogs);
 
-    // Create workout logs
-    if (body.logs && body.logs.length > 0) {
-      await db.insert(workoutLogs).values(
-        body.logs.map((log) => ({
-          workoutId: workout.id,
-          exerciseId: log.exercise_id,
-          setOrder: log.set_order,
-          weight: log.weight,
-          reps: log.reps,
-          note: log.note || null,
-        }))
+    if (incomingLogs.length > 0 && logs.length === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "找不到已完成的動作資料，請重新整理頁面後再儲存一次。",
+        },
+        { status: 400 }
       );
     }
 
-    return NextResponse.json(workout);
+    const templateId = await resolveTemplateId(db, body.template_id);
+
+    const workout = await db.transaction(async (tx) => {
+      const [createdWorkout] = await tx
+        .insert(workouts)
+        .values({
+          userId: user.id,
+          startedAt: body.started_at,
+          endedAt: body.ended_at,
+          templateId,
+          note: body.note,
+        })
+        .returning();
+
+      if (logs.length > 0) {
+        await tx.insert(workoutLogs).values(
+          logs.map((log) => ({
+            workoutId: createdWorkout.id,
+            exerciseId: log.exercise_id,
+            setOrder: log.set_order,
+            weight: log.weight,
+            reps: log.reps,
+            note: log.note || null,
+          }))
+        );
+      }
+
+      return createdWorkout;
+    });
+
+    return NextResponse.json({
+      ...workout,
+      skippedLogs,
+    });
   } catch (error) {
     console.error("Failed to create workout:", error);
     return NextResponse.json({ error: "Failed to create workout" }, { status: 500 });

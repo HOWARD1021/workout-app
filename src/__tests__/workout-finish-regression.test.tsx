@@ -28,8 +28,22 @@ vi.mock("sonner", () => ({
   toast: {
     error: vi.fn(),
     success: vi.fn(),
+    warning: vi.fn(),
   },
 }));
+
+const mockExercise = {
+  id: "exercise-1",
+  name: "Bench Press",
+  nameZh: "臥推",
+  type: "Strength",
+  muscleGroup: "Chest",
+  imageUrl: null,
+  gifUrl: null,
+  isCustom: false,
+  createdAt: null,
+  deletedAt: null,
+};
 
 function FinishProbe() {
   const { isWorkoutActive, isFinishing, completedSummary, finishWorkout } =
@@ -88,7 +102,7 @@ describe("workout finish flow", () => {
       })
     );
 
-    vi.spyOn(api.exercisesApi, "list").mockResolvedValue([]);
+    vi.spyOn(api.exercisesApi, "list").mockResolvedValue([mockExercise]);
   });
 
   afterEach(() => {
@@ -176,7 +190,7 @@ describe("workout finish flow", () => {
   it("keeps the workout recoverable and reports a save failure", async () => {
     vi.spyOn(api.analyticsApi, "prs").mockResolvedValue([]);
     vi.spyOn(api.workoutsApi, "create").mockRejectedValue(
-      new Error("network unavailable")
+      new api.ApiError(401, "Unauthorized")
     );
     vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -194,21 +208,23 @@ describe("workout finish flow", () => {
     expect(screen.getByText("active")).toBeInTheDocument();
     expect(screen.getByText("idle")).toBeInTheDocument();
     expect(toast.error).toHaveBeenCalledWith(
-      "儲存訓練失敗，請檢查連線後再試一次。"
+      "登入已過期，請重新登入後再儲存。"
     );
   });
 
-  it("stops waiting and allows a retry when the save request hangs", async () => {
+  it("sends resolved exercise ids when saving completed sets", async () => {
     vi.spyOn(api.analyticsApi, "prs").mockResolvedValue([]);
-    vi.spyOn(api.workoutsApi, "create").mockImplementation(
-      (_data, options) =>
-        new Promise((_resolve, reject) => {
-          options?.signal?.addEventListener("abort", () => {
-            reject(new DOMException("Aborted", "AbortError"));
-          });
-        })
-    );
-    vi.spyOn(console, "error").mockImplementation(() => {});
+    const createWorkout = vi
+      .spyOn(api.workoutsApi, "create")
+      .mockResolvedValue({
+        id: "workout-1",
+        templateId: null,
+        startedAt: "2026-07-14T08:00:00.000Z",
+        endedAt: "2026-07-14T09:00:00.000Z",
+        note: null,
+        createdAt: null,
+        deletedAt: null,
+      });
 
     render(
       <WorkoutProvider>
@@ -216,17 +232,22 @@ describe("workout finish flow", () => {
       </WorkoutProvider>
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "finish" }));
-    expect(screen.getByText("saving")).toBeInTheDocument();
-
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(15_000);
+      fireEvent.click(screen.getByRole("button", { name: "finish" }));
+      await Promise.resolve();
     });
 
-    expect(screen.getByText("active")).toBeInTheDocument();
-    expect(screen.getByText("idle")).toBeInTheDocument();
-    expect(toast.error).toHaveBeenCalledWith(
-      "儲存訓練失敗，請檢查連線後再試一次。"
+    expect(createWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        logs: [
+          expect.objectContaining({
+            exercise_id: "exercise-1",
+            set_order: 1,
+            weight: 80,
+            reps: 8,
+          }),
+        ],
+      })
     );
   });
 });

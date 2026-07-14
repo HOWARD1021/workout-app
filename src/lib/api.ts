@@ -1,10 +1,30 @@
 const API_BASE = "/api";
 
+export class ApiError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+async function readErrorMessage(res: Response): Promise<string> {
+  try {
+    const data = (await res.json()) as { error?: string };
+    return data.error || `API error: ${res.status}`;
+  } catch {
+    return `API error: ${res.status}`;
+  }
+}
+
 export async function fetchApi<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<T> {
   const res = await fetch(`${API_BASE}${endpoint}`, {
+    credentials: "include",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -13,7 +33,7 @@ export async function fetchApi<T>(
   });
 
   if (!res.ok) {
-    throw new Error(`API error: ${res.status}`);
+    throw new ApiError(res.status, await readErrorMessage(res));
   }
 
   return res.json();
@@ -51,11 +71,10 @@ export const workoutsApi = {
       reps: number | null;
       note?: string;
     }>;
-  }, options?: { signal?: AbortSignal }) =>
-    fetchApi<Workout>("/workouts", {
+  }) =>
+    fetchApi<Workout & { skippedLogs?: number }>("/workouts", {
       method: "POST",
       body: JSON.stringify(data),
-      signal: options?.signal,
     }),
 };
 

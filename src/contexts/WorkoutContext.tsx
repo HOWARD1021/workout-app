@@ -11,6 +11,11 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { exercisesApi, workoutsApi, analyticsApi, type Exercise, type ExercisePR } from "@/lib/api";
+import {
+  buildWorkoutLogs,
+  getWorkoutSaveErrorMessage,
+  rehydrateExerciseBlocks,
+} from "@/lib/workout-save";
 import { usePreviousExerciseData } from "@/hooks/usePreviousExerciseData";
 import {
   useTemplateDetails,
@@ -101,7 +106,6 @@ const STORAGE_KEY = "workout-active-session";
 const TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 hours
 const AUTO_FINISH_MS = 5 * 60 * 1000;   // 5 min after dialog
 const PR_LOOKUP_TIMEOUT_MS = 1_500;
-const WORKOUT_SAVE_TIMEOUT_MS = 15_000;
 
 function resolveWithin<T>(
   promise: Promise<T>,
@@ -255,6 +259,19 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     exercisesApi.list().then(setExercises).catch(console.error);
   }, []);
 
+  // ── Re-resolve cached exercise IDs after the catalog loads ──
+  useEffect(() => {
+    if (exercises.length === 0 || exerciseBlocks.length === 0) return;
+
+    setExerciseBlocks((prev) => {
+      const next = rehydrateExerciseBlocks(prev, exercises);
+      const changed = next.some(
+        (block, index) => block.exercise.id !== prev[index]?.exercise.id
+      );
+      return changed ? next : prev;
+    });
+  }, [exercises, exerciseBlocks.length]);
+
   // ── Restore session from localStorage ──
   useEffect(() => {
     if (restoredRef.current) return;
@@ -339,12 +356,12 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       !templateLoaded
     ) {
       const blocks: ExerciseBlock[] = templateExercises.map((te, index) => {
-        // Look up full exercise data (with nameZh, imageUrl, gifUrl) from the exercise list
-        const fullExercise = exercises.find((e) => e.id === te.exercise?.id);
+        const exerciseId = te.exercise?.id || te.exerciseId || "";
+        const fullExercise = exercises.find((e) => e.id === exerciseId);
         return {
-        id: `block-${te.exercise?.id || index}-${Date.now()}`,
+        id: `block-${exerciseId || index}-${Date.now()}`,
         exercise: fullExercise || {
-          id: te.exercise?.id || "",
+          id: exerciseId,
           name: te.exercise?.name || "",
           nameZh: null,
           type: te.exercise?.type || null,
@@ -616,34 +633,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     setIsFinishing(true);
     const endTime = new Date();
 
-    const logs: Array<{
-      exercise_id: string;
-      set_order: number;
-      weight: number | null;
-      reps: number | null;
-      note?: string;
-    }> = [];
-
-    exerciseBlocks.forEach((block) => {
-      block.sets.forEach((set) => {
-        if (set.completed) {
-          const setNote = [block.note, set.note].filter(Boolean).join(" | ");
-          logs.push({
-            exercise_id: block.exercise.id,
-            set_order: set.set_order,
-            weight: set.weight,
-            reps: set.reps,
-            note: setNote || undefined,
-          });
-        }
-      });
-    });
-
-    const saveAbortController = new AbortController();
-    const saveTimeout = setTimeout(
-      () => saveAbortController.abort(),
-      WORKOUT_SAVE_TIMEOUT_MS
-    );
+    const logs = buildWorkoutLogs(exerciseBlocks, exercises);
 
     try {
       // Start the best-effort PR lookup and required save together. A slow
@@ -653,18 +643,13 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         PR_LOOKUP_TIMEOUT_MS,
         []
       );
-      const savePromise = workoutsApi.create(
-        {
-          started_at: startTime.toISOString(),
-          ended_at: endTime.toISOString(),
-          template_id: templateId || undefined,
-          logs,
-        },
-        {
-          signal: saveAbortController.signal,
-        }
-      );
-      const [, currentPRs] = await Promise.all([
+      const savePromise = workoutsApi.create({
+        started_at: startTime.toISOString(),
+        ended_at: endTime.toISOString(),
+        template_id: templateId || undefined,
+        logs,
+      });
+      const [saveResult, currentPRs] = await Promise.all([
         savePromise,
         currentPRsPromise,
       ]);
@@ -676,6 +661,10 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       setShowTimeoutPrompt(false);
       saveSession(null);
 
+      if (saveResult.skippedLogs && saveResult.skippedLogs > 0) {
+        toast.warning("部分組數因動作資料失效未儲存，其餘紀錄已保存。");
+      }
+
       // Toast for new PRs
       if (summary.newPRs.length > 0) {
         toast.success(`🏆 ${summary.newPRs.length} 個新紀錄！`, { duration: 5000 });
@@ -683,14 +672,13 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       return true;
     } catch (error) {
       console.error("Failed to save workout:", error);
-      toast.error("儲存訓練失敗，請檢查連線後再試一次。");
+      toast.error(getWorkoutSaveErrorMessage(error));
       return false;
     } finally {
-      clearTimeout(saveTimeout);
       finishInProgressRef.current = false;
       setIsFinishing(false);
     }
-  }, [startTime, exerciseBlocks, templateId, calculateSummary, stopRestTimer]);
+  }, [startTime, exerciseBlocks, exercises, templateId, calculateSummary, stopRestTimer]);
 
   // Stable ref so the auto-finish timer can call the latest finishWorkout
   const finishWorkoutRef = useRef(finishWorkout);
