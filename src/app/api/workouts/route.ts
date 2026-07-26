@@ -169,34 +169,46 @@ export async function POST(request: Request) {
 
     const templateId = await resolveTemplateId(db, body.template_id);
 
-    const workout = await db.transaction(async (tx) => {
-      const [createdWorkout] = await tx
-        .insert(workouts)
-        .values({
-          ...(workoutId ? { id: workoutId } : {}),
-          userId: user.id,
-          startedAt: body.started_at,
-          endedAt: body.ended_at,
-          templateId,
-          note: body.note,
-        })
-        .returning();
+    // Cloudflare D1 does not support Drizzle's explicit BEGIN/COMMIT
+    // transaction calls in a Worker. Use D1's batch API instead; batches are
+    // executed atomically and work across the production D1 binding.
+    const persistedWorkoutId = workoutId || crypto.randomUUID();
+    const workoutInsert = db.insert(workouts).values({
+      id: persistedWorkoutId,
+      userId: user.id,
+      startedAt: body.started_at,
+      endedAt: body.ended_at,
+      templateId,
+      note: body.note,
+    });
 
-      if (logs.length > 0) {
-        await tx.insert(workoutLogs).values(
+    if (logs.length > 0) {
+      await db.batch([
+        workoutInsert,
+        db.insert(workoutLogs).values(
           logs.map((log) => ({
-            workoutId: createdWorkout.id,
+            workoutId: persistedWorkoutId,
             exerciseId: log.exercise_id,
             setOrder: log.set_order,
             weight: log.weight,
             reps: log.reps,
             note: log.note || null,
           }))
-        );
-      }
+        ),
+      ]);
+    } else {
+      await db.batch([workoutInsert]);
+    }
 
-      return createdWorkout;
-    });
+    const [workout] = await db
+      .select()
+      .from(workouts)
+      .where(eq(workouts.id, persistedWorkoutId))
+      .limit(1);
+
+    if (!workout) {
+      throw new Error("Workout was not returned after D1 batch write");
+    }
 
     return NextResponse.json({
       ...workout,
