@@ -55,6 +55,7 @@ interface WorkoutContextValue {
   isRestored: boolean;
   isWorkoutActive: boolean;
   isFinishing: boolean;
+  saveError: string | null;
   exerciseBlocks: ExerciseBlock[];
   startTime: Date | null;
   elapsedTime: number;
@@ -80,6 +81,7 @@ interface WorkoutContextValue {
   finishWorkout: () => Promise<boolean>;
   discardWorkout: () => void;
   clearCompletedSummary: () => void;
+  requestCloseWorkout: () => void;
   addExercise: (exercise: Exercise) => Promise<void>;
   addSet: (blockIndex: number) => void;
   deleteSet: (blockIndex: number, setIndex: number) => void;
@@ -106,6 +108,26 @@ const STORAGE_KEY = "workout-active-session";
 const TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 hours
 const AUTO_FINISH_MS = 5 * 60 * 1000;   // 5 min after dialog
 const PR_LOOKUP_TIMEOUT_MS = 1_500;
+const WORKOUT_SAVE_TIMEOUT_MS = 10_000;
+
+function createWorkoutSubmissionId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `workout-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+type AudioContextConstructor = new () => AudioContext;
+
+function getAudioContextConstructor(): AudioContextConstructor | null {
+  if (typeof window === "undefined") return null;
+  return (
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext?: AudioContextConstructor })
+      .webkitAudioContext ||
+    null
+  );
+}
 
 function resolveWithin<T>(
   promise: Promise<T>,
@@ -128,10 +150,41 @@ function resolveWithin<T>(
   });
 }
 
+function rejectWithin<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  onTimeout: () => void
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timeout = setTimeout(() => {
+      settled = true;
+      onTimeout();
+      reject(new DOMException("Request timed out", "AbortError"));
+    }, timeoutMs);
+
+    promise.then(
+      (value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        resolve(value);
+      },
+      (error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        reject(error);
+      }
+    );
+  });
+}
+
 interface PersistedWorkout {
   exerciseBlocks: ExerciseBlock[];
   startTimeISO: string;
   templateId: string | null;
+  submissionId?: string;
 }
 
 function saveSession(data: PersistedWorkout | null) {
@@ -167,14 +220,17 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   // ── Core workout state ──
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [exerciseBlocks, setExerciseBlocks] = useState<ExerciseBlock[]>([]);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [templateId, setTemplateId] = useState<string | null>(null);
+  const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [templateLoaded, setTemplateLoaded] = useState(false);
   const [completedSummary, setCompletedSummary] =
     useState<WorkoutSummary | null>(null);
   const [showTimeoutPrompt, setShowTimeoutPrompt] = useState(false);
+  const [showClosePrompt, setShowClosePrompt] = useState(false);
   const [isRestored, setIsRestored] = useState(false);
   const autoFinishTimerRef = useRef<NodeJS.Timeout | null>(null);
   const finishInProgressRef = useRef(false);
@@ -193,7 +249,6 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
 
   // ── Audio ──
   const audioContextRef = useRef<AudioContext | null>(null);
-  const audioInitializedRef = useRef(false);
 
   // ── Service Worker ──
   const swRef = useRef<ServiceWorkerRegistration | null>(null);
@@ -227,23 +282,43 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ── Initialize AudioContext + Notification permission on first user interaction ──
+  const ensureAudioContext = useCallback(async () => {
+    let ctx = audioContextRef.current;
+
+    if (ctx?.state === "closed") {
+      ctx = null;
+      audioContextRef.current = null;
+    }
+
+    if (!ctx) {
+      const AudioContextCtor = getAudioContextConstructor();
+      if (!AudioContextCtor) return null;
+
+      try {
+        ctx = new AudioContextCtor();
+        audioContextRef.current = ctx;
+      } catch {
+        return null;
+      }
+    }
+
+    if (ctx.state !== "running") {
+      try {
+        await ctx.resume();
+      } catch {
+        return null;
+      }
+    }
+
+    return ctx.state === "running" ? ctx : null;
+  }, []);
+
   useEffect(() => {
     const initAudio = () => {
-      if (!audioInitializedRef.current) {
-        try {
-          audioContextRef.current = new (window.AudioContext ||
-            (window as unknown as { webkitAudioContext: typeof AudioContext })
-              .webkitAudioContext)();
-          // Resume in case it's suspended (mobile Safari)
-          audioContextRef.current.resume();
-          audioInitializedRef.current = true;
-        } catch (e) {
-          console.error("Failed to init AudioContext:", e);
-        }
-        // Request notification permission
-        if ("Notification" in window && Notification.permission === "default") {
-          Notification.requestPermission();
-        }
+      void ensureAudioContext();
+
+      if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
       }
     };
     document.addEventListener("touchstart", initAudio, { once: true });
@@ -252,7 +327,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("touchstart", initAudio);
       document.removeEventListener("click", initAudio);
     };
-  }, []);
+  }, [ensureAudioContext]);
 
   // ── Fetch exercises on mount ──
   useEffect(() => {
@@ -282,6 +357,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       setExerciseBlocks(saved.exerciseBlocks);
       setStartTime(new Date(saved.startTimeISO));
       setTemplateId(saved.templateId);
+      setSubmissionId(saved.submissionId || createWorkoutSubmissionId());
       setTemplateLoaded(true);
     }
     setIsRestored(true);
@@ -295,11 +371,12 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         exerciseBlocks,
         startTimeISO: startTime.toISOString(),
         templateId,
+        submissionId: submissionId || undefined,
       });
     } else if (!isWorkoutActive) {
       saveSession(null);
     }
-  }, [isWorkoutActive, exerciseBlocks, startTime, templateId]);
+  }, [isWorkoutActive, exerciseBlocks, startTime, templateId, submissionId]);
 
   // ── Warn before closing tab ──
   useEffect(() => {
@@ -388,18 +465,10 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   }, [isWorkoutActive, templateId, templateExercises.length, templateLoaded]);
 
   // ── Sound ──
-  const playRestEndSound = useCallback(() => {
+  const playRestEndSound = useCallback(async () => {
     try {
-      const ctx =
-        audioContextRef.current ||
-        new (window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext })
-            .webkitAudioContext)();
-      audioContextRef.current = ctx;
-
-      if (ctx.state === "suspended") {
-        ctx.resume();
-      }
+      const ctx = await ensureAudioContext();
+      if (!ctx) return;
 
       const playBeep = (time: number, freq: number, duration = 0.3) => {
         // Sine layer
@@ -460,6 +529,15 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Failed to play sound:", error);
     }
+  }, [ensureAudioContext]);
+
+  // ── Helper: send message to service worker ──
+  const postToSW = useCallback((msg: { type: string; endTime?: number }) => {
+    if (swRef.current?.active) {
+      swRef.current.active.postMessage(msg);
+    } else if (navigator.serviceWorker?.controller) {
+      navigator.serviceWorker.controller.postMessage(msg);
+    }
   }, []);
 
   // ── Sync timers when tab regains focus (mobile background throttling fix) ──
@@ -478,7 +556,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
           if (restTimerRef.current) clearInterval(restTimerRef.current);
           setRestTimer(null);
           setIsRestTimerRunning(false);
-          playRestEndSound();
+          postToSW({ type: "STOP_TIMER" });
+          void playRestEndSound();
         } else {
           setRestTimer(remaining);
         }
@@ -486,16 +565,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [isWorkoutActive, startTime, playRestEndSound]);
-
-  // ── Helper: send message to service worker ──
-  const postToSW = useCallback((msg: { type: string; endTime?: number }) => {
-    if (swRef.current?.active) {
-      swRef.current.active.postMessage(msg);
-    } else if (navigator.serviceWorker?.controller) {
-      navigator.serviceWorker.controller.postMessage(msg);
-    }
-  }, []);
+  }, [isWorkoutActive, startTime, playRestEndSound, postToSW]);
 
   // ── Rest timer (endTime-based for background accuracy) ──
   const startRestTimerFn = useCallback(
@@ -517,7 +587,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
           restEndTimeRef.current = null;
           setRestTimer(null);
           setIsRestTimerRunning(false);
-          playRestEndSound();
+          postToSW({ type: "STOP_TIMER" });
+          void playRestEndSound();
         } else {
           setRestTimer(remaining);
         }
@@ -558,8 +629,11 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     setElapsedTime(0);
     setExerciseBlocks([]);
     setTemplateId(tid || null);
+    setSubmissionId(createWorkoutSubmissionId());
     setTemplateLoaded(false);
     setCompletedSummary(null);
+    setShowClosePrompt(false);
+    setSaveError(null);
   }, []);
 
   const calculateSummary = useCallback((prs?: ExercisePR[]): WorkoutSummary => {
@@ -634,6 +708,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     const endTime = new Date();
 
     const logs = buildWorkoutLogs(exerciseBlocks, exercises);
+    const saveController = new AbortController();
+    setSaveError(null);
 
     try {
       // Start the best-effort PR lookup and required save together. A slow
@@ -643,12 +719,20 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
         PR_LOOKUP_TIMEOUT_MS,
         []
       );
-      const savePromise = workoutsApi.create({
-        started_at: startTime.toISOString(),
-        ended_at: endTime.toISOString(),
-        template_id: templateId || undefined,
-        logs,
-      });
+      const savePromise = rejectWithin(
+        workoutsApi.create(
+          {
+            id: submissionId || undefined,
+            started_at: startTime.toISOString(),
+            ended_at: endTime.toISOString(),
+            template_id: templateId || undefined,
+            logs,
+          },
+          { signal: saveController.signal }
+        ),
+        WORKOUT_SAVE_TIMEOUT_MS,
+        () => saveController.abort()
+      );
       const [saveResult, currentPRs] = await Promise.all([
         savePromise,
         currentPRsPromise,
@@ -659,6 +743,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       setIsWorkoutActive(false);
       setCompletedSummary(summary);
       setShowTimeoutPrompt(false);
+      setShowClosePrompt(false);
+      setSaveError(null);
       saveSession(null);
 
       if (saveResult.skippedLogs && saveResult.skippedLogs > 0) {
@@ -672,13 +758,15 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       return true;
     } catch (error) {
       console.error("Failed to save workout:", error);
-      toast.error(getWorkoutSaveErrorMessage(error));
+      const message = getWorkoutSaveErrorMessage(error);
+      setSaveError(message);
+      toast.error(message);
       return false;
     } finally {
       finishInProgressRef.current = false;
       setIsFinishing(false);
     }
-  }, [startTime, exerciseBlocks, exercises, templateId, calculateSummary, stopRestTimer]);
+  }, [startTime, exerciseBlocks, exercises, templateId, submissionId, calculateSummary, stopRestTimer]);
 
   // Stable ref so the auto-finish timer can call the latest finishWorkout
   const finishWorkoutRef = useRef(finishWorkout);
@@ -694,8 +782,21 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     setTemplateLoaded(false);
     setCompletedSummary(null);
     setShowTimeoutPrompt(false);
+    setShowClosePrompt(false);
+    setSaveError(null);
     saveSession(null);
   }, [stopRestTimer]);
+
+  const requestCloseWorkout = useCallback(() => {
+    if (!isWorkoutActive || isFinishing) return;
+    setShowClosePrompt(true);
+  }, [isFinishing, isWorkoutActive]);
+
+  const finishFromClosePrompt = useCallback(() => {
+    void finishWorkout().then((saved) => {
+      if (saved) router.push("/log");
+    });
+  }, [finishWorkout, router]);
 
   const clearCompletedSummary = useCallback(() => {
     setCompletedSummary(null);
@@ -864,6 +965,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     isRestored,
     isWorkoutActive,
     isFinishing,
+    saveError,
     exerciseBlocks,
     startTime,
     elapsedTime,
@@ -881,6 +983,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     finishWorkout,
     discardWorkout,
     clearCompletedSummary,
+    requestCloseWorkout,
     addExercise,
     addSet,
     deleteSet,
@@ -920,6 +1023,18 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
             });
           }}
           onDiscard={() => { discardWorkout(); router.push("/"); }}
+        />
+      )}
+      {showClosePrompt && isWorkoutActive && !showTimeoutPrompt && (
+        <WorkoutCloseDialog
+          isFinishing={isFinishing}
+          saveError={saveError}
+          onContinue={() => setShowClosePrompt(false)}
+          onFinish={finishFromClosePrompt}
+          onDiscard={() => {
+            discardWorkout();
+            router.push("/");
+          }}
         />
       )}
     </WorkoutContext.Provider>
@@ -965,6 +1080,63 @@ function WorkoutTimeoutDialog({
             className="w-full py-3 rounded-xl bg-[#1CB0F6] text-white font-bold shadow-[0_3px_0_0_#0A9AD6] active:shadow-none active:translate-y-0.5 transition-all"
           >
             {isFinishing ? "儲存中..." : "✅ 結束並儲存"}
+          </button>
+          <button
+            onClick={onDiscard}
+            disabled={isFinishing}
+            className="w-full py-2.5 rounded-xl text-[#AFAFAF] text-sm font-medium hover:text-red-500 transition-colors"
+          >
+            放棄此次訓練
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WorkoutCloseDialog({
+  isFinishing,
+  saveError,
+  onContinue,
+  onFinish,
+  onDiscard,
+}: {
+  isFinishing: boolean;
+  saveError: string | null;
+  onContinue: () => void;
+  onFinish: () => void;
+  onDiscard: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center">
+        <div className="text-4xl mb-3">🏋️</div>
+        <h2 className="text-xl font-bold text-[#2D3648] mb-2">
+          結束此次訓練？
+        </h2>
+        <p className="text-sm text-[#6f6f78] mb-6">
+          你可以繼續記錄、儲存目前訓練，或放棄此次訓練。
+        </p>
+        {saveError && (
+          <p role="alert" className="mb-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">
+            {saveError}
+          </p>
+        )}
+        <div className="space-y-2">
+          <button
+            onClick={onContinue}
+            disabled={isFinishing}
+            className="w-full py-3 rounded-xl bg-[#58CC02] text-white font-bold shadow-[0_3px_0_0_#46A302] active:shadow-none active:translate-y-0.5 transition-all"
+          >
+            💪 繼續訓練
+          </button>
+          <button
+            onClick={onFinish}
+            disabled={isFinishing}
+            aria-busy={isFinishing}
+            className="w-full py-3 rounded-xl bg-[#1CB0F6] text-white font-bold shadow-[0_3px_0_0_#0A9AD6] active:shadow-none active:translate-y-0.5 transition-all"
+          >
+            {isFinishing ? "儲存中..." : saveError ? "🔁 重試儲存" : "✅ 結束並儲存"}
           </button>
           <button
             onClick={onDiscard}

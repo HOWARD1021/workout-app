@@ -61,6 +61,7 @@ export const exercisesApi = {
 export const workoutsApi = {
   list: () => fetchApi<Workout[]>("/workouts"),
   create: (data: {
+    id?: string;
     started_at: string;
     ended_at: string;
     template_id?: string;
@@ -71,10 +72,11 @@ export const workoutsApi = {
       reps: number | null;
       note?: string;
     }>;
-  }) =>
+  }, options?: Pick<RequestInit, "signal">) =>
     fetchApi<Workout & { skippedLogs?: number }>("/workouts", {
       method: "POST",
       body: JSON.stringify(data),
+      signal: options?.signal,
     }),
 };
 

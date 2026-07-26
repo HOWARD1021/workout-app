@@ -1,6 +1,20 @@
 // Service Worker for Workout App — background timer notifications
 
 let timerTimeout = null;
+let timerGeneration = 0;
+
+function notifyTimerEnd() {
+  return self.registration.showNotification("休息結束！💪", {
+    body: "回來繼續訓練！",
+    icon: "/images/duck-mascot.png",
+    badge: "/images/duck-mascot.png",
+    tag: "rest-timer",
+    renotify: true,
+    vibrate: [200, 100, 200, 100, 300],
+    silent: false,
+    requireInteraction: true,
+  });
+}
 
 self.addEventListener("message", (event) => {
   const { type, endTime } = event.data || {};
@@ -8,26 +22,23 @@ self.addEventListener("message", (event) => {
   if (type === "START_TIMER") {
     // Clear any existing timer
     if (timerTimeout) clearTimeout(timerTimeout);
+    const generation = ++timerGeneration;
 
     const delay = endTime - Date.now();
-    if (delay <= 0) return;
+    if (delay <= 0) {
+      event.waitUntil?.(notifyTimerEnd());
+      return;
+    }
 
     timerTimeout = setTimeout(() => {
+      if (generation !== timerGeneration) return;
       timerTimeout = null;
-      self.registration.showNotification("休息結束！💪", {
-        body: "回來繼續訓練！",
-        icon: "/images/duck-mascot.png",
-        badge: "/images/duck-mascot.png",
-        tag: "rest-timer",
-        renotify: true,
-        vibrate: [200, 100, 200, 100, 300],
-        silent: false,
-        requireInteraction: true,
-      });
+      void notifyTimerEnd();
     }, delay);
   }
 
   if (type === "STOP_TIMER") {
+    timerGeneration += 1;
     if (timerTimeout) {
       clearTimeout(timerTimeout);
       timerTimeout = null;

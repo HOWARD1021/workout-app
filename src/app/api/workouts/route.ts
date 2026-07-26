@@ -122,12 +122,37 @@ export async function POST(request: Request) {
     const { env } = getCloudflareContext();
     const db = getDb(env.DB);
     const body = await request.json() as {
+      id?: string;
       started_at: string;
       ended_at: string;
       template_id?: string;
       note?: string;
       logs?: WorkoutLogInput[];
     };
+
+    const workoutId = body.id?.trim() || undefined;
+
+    if (workoutId) {
+      const [existingWorkout] = await db
+        .select()
+        .from(workouts)
+        .where(eq(workouts.id, workoutId))
+        .limit(1);
+
+      if (existingWorkout) {
+        if (existingWorkout.userId !== user.id) {
+          return NextResponse.json(
+            { error: "Workout submission conflict" },
+            { status: 409 }
+          );
+        }
+
+        return NextResponse.json({
+          ...existingWorkout,
+          skippedLogs: 0,
+        });
+      }
+    }
 
     const incomingLogs = body.logs ?? [];
     const { logs, skippedLogs } = await sanitizeWorkoutLogs(db, incomingLogs);
@@ -148,6 +173,7 @@ export async function POST(request: Request) {
       const [createdWorkout] = await tx
         .insert(workouts)
         .values({
+          ...(workoutId ? { id: workoutId } : {}),
           userId: user.id,
           startedAt: body.started_at,
           endedAt: body.ended_at,

@@ -43,7 +43,6 @@ import {
 } from "@/components/ui/dialog";
 import { type Exercise } from "@/lib/api";
 import { useWorkout, type ExerciseBlock } from "@/contexts/WorkoutContext";
-import { useRouter } from "next/navigation";
 import DuckMascot from "./DuckMascot";
 import ExerciseImageDialog from "./ExerciseImageDialog";
 import RestTimerDialog from "./RestTimerDialog";
@@ -260,7 +259,6 @@ function SortableExerciseCard({
 }
 
 export default function WorkoutLogger() {
-  const router = useRouter();
   const workout = useWorkout();
 
   const {
@@ -279,6 +277,7 @@ export default function WorkoutLogger() {
     updateBlockNote,
     reorderBlocks,
     finishWorkout,
+    requestCloseWorkout,
     restTimer,
     isRestTimerRunning,
     isRestTimerExpanded,
@@ -394,10 +393,11 @@ export default function WorkoutLogger() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push("/")}
+              onClick={requestCloseWorkout}
+              aria-label="Close"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Back
+              Close
             </Button>
             <div className="flex items-center gap-2 rounded-full bg-[#ededf0] px-3 py-1.5 text-[#111111]">
               <Clock className="h-4 w-4" />
