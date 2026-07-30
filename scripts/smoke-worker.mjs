@@ -4,9 +4,9 @@ import { spawn } from "node:child_process";
 const port = 8798;
 const baseUrl = `http://127.0.0.1:${port}`;
 const expectedVersion = process.env.NEXT_PUBLIC_APP_VERSION || null;
-const wrangler = spawn(
+const worker = spawn(
   "npx",
-  ["wrangler", "dev", "--local", "--port", String(port)],
+  ["opennextjs-cloudflare", "preview", "--", "--port", String(port)],
   {
     cwd: process.cwd(),
     stdio: "ignore",
@@ -44,7 +44,20 @@ try {
 
   const unauthenticatedWorkouts = await fetch(`${baseUrl}/api/workouts`);
   assert.equal(unauthenticatedWorkouts.status, 401);
+
+  const analytics = await fetch(`${baseUrl}/analytics`, {
+    headers: {
+      Cookie: "better-auth.session_token=smoke-test",
+    },
+  });
+  assert.equal(analytics.status, 200);
+  assert.equal(
+    analytics.headers.get("x-opennext-cache"),
+    "HIT",
+    "prerendered analytics must be served from the static cache"
+  );
+  assert.match(await analytics.text(), /載入訓練回顧/);
   console.log(`Worker smoke passed: ${body.releaseVersion}`);
 } finally {
-  wrangler.kill("SIGTERM");
+  worker.kill("SIGTERM");
 }

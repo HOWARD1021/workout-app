@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "build:cf": "npx opennextjs-cloudflare build",
     "smoke:worker": "node scripts/smoke-worker.mjs",
-    "preview:cf": "npx wrangler dev --port 8788",
+    "preview:cf": "npx opennextjs-cloudflare preview -- --port 8788",
     "local": "lsof -ti :8788 | xargs kill -9 2>/dev/null; npm run build:cf && npm run preview:cf",
     "deploy:cf": "npm run build:cf && npx opennextjs-cloudflare deploy",
     "deploy": "npm run deploy:cf",
