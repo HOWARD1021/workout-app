@@ -3,8 +3,9 @@
 import { Suspense, useEffect } from "react";
 import WorkoutLogger from "@/components/WorkoutLogger";
 import WorkoutComplete from "@/components/WorkoutComplete";
-import { useWorkout } from "@/contexts/WorkoutContext";
+import { WorkoutProvider, useWorkout } from "@/contexts/WorkoutContext";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useSession } from "@/lib/auth-client";
 
 function LogPageContent() {
   const router = useRouter();
@@ -50,9 +51,26 @@ function LogPageContent() {
 }
 
 export default function LogPage() {
+  const router = useRouter();
+  const { data: session, isPending } = useSession();
+
+  useEffect(() => {
+    if (!isPending && !session) {
+      router.replace("/");
+    }
+  }, [isPending, router, session]);
+
   return (
     <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center">Loading...</div>}>
-      <LogPageContent />
+      {isPending || !session ? (
+        <div className="min-h-screen bg-white flex items-center justify-center text-gray-400">
+          Checking sign-in...
+        </div>
+      ) : (
+        <WorkoutProvider key={session.user.id} userId={session.user.id}>
+          <LogPageContent />
+        </WorkoutProvider>
+      )}
     </Suspense>
   );
 }

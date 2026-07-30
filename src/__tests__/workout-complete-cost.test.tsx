@@ -4,6 +4,8 @@ import WorkoutComplete from "@/components/WorkoutComplete";
 import * as membershipLib from "@/lib/membership";
 import * as api from "@/lib/api";
 
+const duckMascotMock = vi.hoisted(() => vi.fn());
+
 // Mock dependencies
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -17,11 +19,22 @@ vi.mock("@/lib/i18n", () => ({
 }));
 
 vi.mock("@/components/DuckMascot", () => ({
-  default: () => <div data-testid="duck-mascot" />,
+  default: (props: { variant?: string }) => {
+    duckMascotMock(props);
+    return <div data-testid="duck-mascot" data-variant={props.variant} />;
+  },
 }));
 
 vi.mock("canvas-confetti", () => ({
   default: vi.fn(),
+}));
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    warning: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
 const baseSummary = {
@@ -36,14 +49,115 @@ const baseSummary = {
   newPRs: [],
 };
 
+const emptyMonthlyRecap = {
+  month: "2026-07",
+  start: "2026-07-01T00:00:00.000Z",
+  end: "2026-08-01T00:00:00.000Z",
+  workoutCount: 0,
+  exerciseCount: 0,
+  totalSets: 0,
+  totalReps: 0,
+  totalVolume: 0,
+  totalDurationMinutes: 0,
+  averageDurationMinutes: 0,
+  exercises: [],
+  muscleGroups: [],
+};
+
 describe("WorkoutComplete cost efficiency card", () => {
   beforeEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
+    const storage = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: vi.fn((key: string) => storage.get(key) ?? null),
+      setItem: vi.fn((key: string, value: string) => {
+        storage.set(key, value);
+      }),
+      removeItem: vi.fn((key: string) => {
+        storage.delete(key);
+      }),
+      clear: vi.fn(() => {
+        storage.clear();
+      }),
+    });
+    duckMascotMock.mockClear();
 
     // Default: achievements check returns empty
     vi.spyOn(api.achievementsApi, "check").mockResolvedValue({
       newUnlocks: [],
     });
+    vi.spyOn(api.analyticsApi, "monthlyRecap").mockResolvedValue(emptyMonthlyRecap);
+  });
+
+  it("uses the normal completion mascot when no PR was broken", () => {
+    render(<WorkoutComplete summary={baseSummary} />);
+
+    expect(screen.getByTestId("duck-mascot")).toHaveAttribute(
+      "data-variant",
+      "complete"
+    );
+  });
+
+  it("uses the PR mascot only when the workout produced new PRs", () => {
+    render(
+      <WorkoutComplete
+        summary={{
+          ...baseSummary,
+          newPRs: [
+            { exerciseName: "Bench Press", weight: 85, previousBest: 80 },
+          ],
+        }}
+      />
+    );
+
+    expect(screen.getByTestId("duck-mascot")).toHaveAttribute(
+      "data-variant",
+      "pr"
+    );
+    expect(screen.getByText("1 個新紀錄！")).toBeInTheDocument();
+  });
+
+  it("shows a month-end recap with exercises and visit count", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-07-30T12:00:00+08:00"));
+    vi.spyOn(api.analyticsApi, "monthlyRecap").mockResolvedValue({
+      month: "2026-07",
+      start: "2026-06-30T16:00:00.000Z",
+      end: "2026-07-31T16:00:00.000Z",
+      workoutCount: 5,
+      exerciseCount: 2,
+      totalSets: 18,
+      totalReps: 144,
+      totalVolume: 10880,
+      totalDurationMinutes: 310,
+      averageDurationMinutes: 62,
+      exercises: [
+        {
+          exerciseId: "bench",
+          exerciseName: "Bench Press",
+          muscleGroup: "Chest",
+          totalSets: 10,
+          totalReps: 80,
+          totalVolume: 6400,
+          maxWeight: 85,
+          workoutCount: 3,
+          lastTrainedAt: "2026-07-28T10:00:00.000Z",
+        },
+      ],
+      muscleGroups: [
+        { muscleGroup: "Chest", totalSets: 10, totalVolume: 6400 },
+      ],
+    });
+
+    render(<WorkoutComplete summary={baseSummary} />);
+
+    expect(await screen.findByText("本月訓練回顧")).toBeInTheDocument();
+    expect(screen.getByText("本月已來 5 次，完成 2 個動作")).toBeInTheDocument();
+    expect(screen.getAllByText("Bench Press").length).toBeGreaterThanOrEqual(1);
+    expect(localStorage.getItem("workout-monthly-recap-seen:2026-07")).toBe(
+      "1"
+    );
   });
 
   it("shows cost efficiency card when membership is configured", async () => {

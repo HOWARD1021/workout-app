@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/lib/i18n";
-import { WorkoutProvider } from "@/contexts/WorkoutContext";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -37,6 +36,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-QKN4XZTV6S"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-QKN4XZTV6S');
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -67,7 +82,7 @@ export default function RootLayout({
           />
         )}
         <I18nProvider>
-          <WorkoutProvider>{children}</WorkoutProvider>
+          {children}
           <Toaster position="top-center" richColors />
         </I18nProvider>
       </body>

@@ -21,6 +21,14 @@ vi.mock("canvas-confetti", () => ({
   default: vi.fn(),
 }));
 
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    warning: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 const summary = {
   exerciseCount: 1,
   totalSets: 1,
@@ -43,6 +51,20 @@ describe("WorkoutComplete animation performance", () => {
     vi.clearAllMocks();
     vi.spyOn(api.achievementsApi, "check").mockResolvedValue({
       newUnlocks: [],
+    });
+    vi.spyOn(api.analyticsApi, "monthlyRecap").mockResolvedValue({
+      month: "2026-07",
+      start: "2026-07-01T00:00:00.000Z",
+      end: "2026-08-01T00:00:00.000Z",
+      workoutCount: 0,
+      exerciseCount: 0,
+      totalSets: 0,
+      totalReps: 0,
+      totalVolume: 0,
+      totalDurationMinutes: 0,
+      averageDurationMinutes: 0,
+      exercises: [],
+      muscleGroups: [],
     });
   });
 

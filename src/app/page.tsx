@@ -3,6 +3,7 @@
 import WorkoutDashboard from "@/components/WorkoutDashboard";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import DuckMascot from "@/components/DuckMascot";
+import { WorkoutProvider } from "@/contexts/WorkoutContext";
 import { useSession } from "@/lib/auth-client";
 import { useTranslation } from "@/lib/i18n";
 
@@ -45,6 +46,8 @@ export default function Home() {
   }
 
   return (
-    <WorkoutDashboard />
+    <WorkoutProvider key={session.user.id} userId={session.user.id}>
+      <WorkoutDashboard />
+    </WorkoutProvider>
   );
 }

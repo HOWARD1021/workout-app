@@ -110,7 +110,7 @@ describe("rest timer provider alerts", () => {
 
   it("waits for AudioContext resume before playing the rest alert", async () => {
     render(
-      <WorkoutProvider>
+      <WorkoutProvider userId="user-1">
         <TimerProbe />
       </WorkoutProvider>
     );
@@ -133,7 +133,7 @@ describe("rest timer provider alerts", () => {
 
   it("stops the background timer when the page completes the alert", async () => {
     render(
-      <WorkoutProvider>
+      <WorkoutProvider userId="user-1">
         <TimerProbe />
       </WorkoutProvider>
     );

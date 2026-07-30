@@ -8,16 +8,19 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "build:cf": "npx opennextjs-cloudflare build",
+    "smoke:worker": "node scripts/smoke-worker.mjs",
     "preview:cf": "npx wrangler dev --port 8788",
     "local": "lsof -ti :8788 | xargs kill -9 2>/dev/null; npm run build:cf && npm run preview:cf",
-    "deploy:cf": "npx wrangler deploy",
-    "deploy": "npm run build:cf && npx wrangler pages deploy .open-next --project-name=workout-app",
+    "deploy:cf": "npm run build:cf && npx opennextjs-cloudflare deploy",
+    "deploy": "npm run deploy:cf",
     "db:generate": "drizzle-kit generate",
-    "db:local:setup": "wrangler d1 execute workout-db --local --file=./drizzle/migrations/0000_nosy_giant_girl.sql && wrangler d1 execute workout-db --local --file=./drizzle/migrations/0001_supreme_the_renegades.sql && wrangler d1 execute workout-db --local --file=./drizzle/seed.sql && wrangler d1 execute workout-db --local --file=./drizzle/0002_seed_templates.sql && wrangler d1 execute workout-db --local --file=./drizzle/0003_more_templates.sql && wrangler d1 execute workout-db --local --file=./drizzle/0004_achievements.sql && wrangler d1 execute workout-db --local --file=./drizzle/0005_friends.sql && wrangler d1 execute workout-db --local --file=./drizzle/0006_more_exercises.sql && wrangler d1 execute workout-db --local --file=./drizzle/0007_zoro_chest_template.sql && wrangler d1 execute workout-db --local --file=./drizzle/0008_exercise_i18n_images.sql && wrangler d1 execute workout-db --local --file=./drizzle/0009_fix_exercise_media_urls.sql",
+    "db:local:setup": "wrangler d1 execute workout-db --local --file=./drizzle/migrations/0000_nosy_giant_girl.sql && wrangler d1 execute workout-db --local --file=./drizzle/migrations/0001_supreme_the_renegades.sql && wrangler d1 execute workout-db --local --file=./drizzle/seed.sql && wrangler d1 execute workout-db --local --file=./drizzle/0002_seed_templates.sql && wrangler d1 execute workout-db --local --file=./drizzle/0003_more_templates.sql && wrangler d1 execute workout-db --local --file=./drizzle/0004_achievements.sql && wrangler d1 execute workout-db --local --file=./drizzle/0005_friends.sql && wrangler d1 execute workout-db --local --file=./drizzle/0006_more_exercises.sql && wrangler d1 execute workout-db --local --file=./drizzle/0007_zoro_chest_template.sql && wrangler d1 execute workout-db --local --file=./drizzle/0008_exercise_i18n_images.sql && wrangler d1 execute workout-db --local --file=./drizzle/0009_fix_exercise_media_urls.sql && wrangler d1 execute workout-db --local --file=./drizzle/0010_workout_save_events.sql && wrangler d1 execute workout-db --local --file=./drizzle/0011_training_review_goals.sql",
     "db:migrate": "tsx scripts/migrate-from-supabase.ts",
     "db:push:local": "wrangler d1 execute workout-db --local --file",
-    "db:push:remote": "wrangler d1 execute workout-db --remote --file"
+    "db:push:remote": "wrangler d1 execute workout-db --remote --file",
+    "db:purge-save-events": "wrangler d1 execute workout-db --remote --command=\"DELETE FROM workout_save_events WHERE created_at < datetime('now', '-30 days')\""
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

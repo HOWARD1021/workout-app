@@ -6,7 +6,7 @@ type AnimationStyle = "bounce" | "float" | "wiggle" | "breathe" | "wave" | "none
 
 interface DuckMascotProps {
   muscleGroup?: string | null;
-  variant?: "default" | "pr" | "failure";
+  variant?: "default" | "complete" | "pr" | "failure";
   size?: "sm" | "md" | "lg" | "xl" | "2xl";
   className?: string;
   animate?: boolean;
@@ -52,7 +52,9 @@ export default function DuckMascot({
   // Determine which duck image to show
   let duckImage = "/images/duck-mascot.png";
 
-  if (variant === "pr") {
+  if (variant === "complete") {
+    duckImage = "/images/duck-complete.png";
+  } else if (variant === "pr") {
     duckImage = "/images/duck-pr.png";
   } else if (variant === "failure") {
     duckImage = "/images/duck-failure.png";

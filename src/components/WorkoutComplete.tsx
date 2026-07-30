@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback, useState, useRef } from "react";
 import confetti from "canvas-confetti";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Trophy, Clock, Dumbbell, TrendingUp, TrendingDown } from "lucide-react";
@@ -9,9 +10,35 @@ import DuckMascot from "./DuckMascot";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/lib/i18n";
 import { useI18n } from "@/lib/i18n";
-import { achievementsApi, workoutsApi, type AchievementWithStatus } from "@/lib/api";
+import {
+  achievementsApi,
+  analyticsApi,
+  workoutsApi,
+  type AchievementWithStatus,
+  type MonthlyRecapData,
+} from "@/lib/api";
 import { loadMembership, calculateMembershipStats } from "@/lib/membership";
 import { type WorkoutSummary } from "@/contexts/WorkoutContext";
+import MonthlyRecapCard, {
+  getLocalMonthRange,
+  isMonthlyRecapWindow,
+} from "./MonthlyRecapCard";
+
+const MONTHLY_RECAP_SEEN_PREFIX = "workout-monthly-recap-seen:";
+
+function hasSeenMonthlyRecap(month: string) {
+  try {
+    return localStorage.getItem(`${MONTHLY_RECAP_SEEN_PREFIX}${month}`) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markMonthlyRecapSeen(month: string) {
+  try {
+    localStorage.setItem(`${MONTHLY_RECAP_SEEN_PREFIX}${month}`, "1");
+  } catch {}
+}
 
 interface WorkoutCompleteProps {
   summary: WorkoutSummary;
@@ -24,8 +51,10 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
   const { locale } = useI18n();
   const [newAchievements, setNewAchievements] = useState<AchievementWithStatus[]>([]);
   const [costStats, setCostStats] = useState<{ costPerVisit: number; nextVisitCost: number } | null>(null);
+  const [monthlyRecap, setMonthlyRecap] = useState<MonthlyRecapData | null>(null);
   const hasChecked = useRef(false);
   const isZh = locale === "zh-TW";
+  const hasNewPRs = summary.newPRs.length > 0;
 
   const formatDuration = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
@@ -91,8 +120,23 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
           }
         }).catch(console.error);
       }
+
+      const monthRange = getLocalMonthRange();
+      if (isMonthlyRecapWindow() && !hasSeenMonthlyRecap(monthRange.month)) {
+        analyticsApi.monthlyRecap(monthRange).then((recap) => {
+          if (recap.workoutCount === 0) return;
+          setMonthlyRecap(recap);
+          markMonthlyRecapSeen(recap.month);
+          toast.success(
+            isZh
+              ? `本月回顧：已訓練 ${recap.workoutCount} 次`
+              : `Monthly recap: ${recap.workoutCount} workouts`,
+            { duration: 5000 }
+          );
+        }).catch(console.error);
+      }
     }
-  }, [fireConfetti]);
+  }, [fireConfetti, isZh]);
 
   const encouragements = [
     t("complete.great"),
@@ -119,7 +163,7 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
 
       {/* Duck Mascot */}
       <div className="mb-6">
-        <DuckMascot variant="pr" size="xl" animate />
+        <DuckMascot variant={hasNewPRs ? "pr" : "complete"} size="xl" animate />
       </div>
 
       {/* Stats Card */}
@@ -225,7 +269,7 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
       </Card>
 
       {/* New PRs Celebration */}
-      {summary.newPRs && summary.newPRs.length > 0 && (
+      {hasNewPRs && (
         <Card className="w-full max-w-sm bg-gradient-to-r from-[#FFD700] to-[#FF8C42] border-0 shadow-xl mt-4">
           <CardContent className="p-4">
             <div className="text-center mb-3">
@@ -251,6 +295,15 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Monthly Recap Notification */}
+      {monthlyRecap && (
+        <MonthlyRecapCard
+          recap={monthlyRecap}
+          compact
+          className="w-full max-w-sm mt-4"
+        />
       )}
 
       {/* Membership Cost Efficiency */}

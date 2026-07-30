@@ -71,7 +71,7 @@ describe("workout finish flow", () => {
       clear: () => storage.clear(),
     });
     localStorage.setItem(
-      "workout-active-session",
+      "workout-active-session:user-1",
       JSON.stringify({
         exerciseBlocks: [
           {
@@ -112,6 +112,21 @@ describe("workout finish flow", () => {
     vi.restoreAllMocks();
   });
 
+  it("does not restore a draft belonging to another user", async () => {
+    render(
+      <WorkoutProvider userId="user-2">
+        <FinishProbe />
+      </WorkoutProvider>
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText("inactive")).toBeInTheDocument();
+    expect(screen.getByText("no-summary")).toBeInTheDocument();
+  });
+
   it("does not let optional PR analytics block saving or completing", async () => {
     vi.spyOn(api.analyticsApi, "prs").mockImplementation(
       () => new Promise(() => {})
@@ -129,7 +144,7 @@ describe("workout finish flow", () => {
       });
 
     render(
-      <WorkoutProvider>
+      <WorkoutProvider userId="user-1">
         <FinishProbe />
       </WorkoutProvider>
     );
@@ -160,7 +175,7 @@ describe("workout finish flow", () => {
       );
 
     render(
-      <WorkoutProvider>
+      <WorkoutProvider userId="user-1">
         <FinishProbe />
       </WorkoutProvider>
     );
@@ -195,7 +210,7 @@ describe("workout finish flow", () => {
     );
 
     render(
-      <WorkoutProvider>
+      <WorkoutProvider userId="user-1">
         <FinishProbe />
       </WorkoutProvider>
     );
@@ -220,7 +235,7 @@ describe("workout finish flow", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
 
     render(
-      <WorkoutProvider>
+      <WorkoutProvider userId="user-1">
         <FinishProbe />
       </WorkoutProvider>
     );
@@ -252,7 +267,7 @@ describe("workout finish flow", () => {
       });
 
     render(
-      <WorkoutProvider>
+      <WorkoutProvider userId="user-1">
         <FinishProbe />
       </WorkoutProvider>
     );
@@ -280,7 +295,7 @@ describe("workout finish flow", () => {
 
   it("opens a close confirmation from the active workout logger", async () => {
     render(
-      <WorkoutProvider>
+      <WorkoutProvider userId="user-1">
         <WorkoutLogger />
       </WorkoutProvider>
     );
@@ -302,7 +317,7 @@ describe("workout finish flow", () => {
 
   it("discards the active workout and clears local recovery data", async () => {
     render(
-      <WorkoutProvider>
+      <WorkoutProvider userId="user-1">
         <WorkoutLogger />
         <FinishProbe />
       </WorkoutProvider>
@@ -317,12 +332,12 @@ describe("workout finish flow", () => {
 
     expect(screen.getByText("inactive")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "結束此次訓練？" })).not.toBeInTheDocument();
-    expect(localStorage.getItem("workout-active-session")).toBeNull();
+    expect(localStorage.getItem("workout-active-session:user-1")).toBeNull();
   });
 
   it("lets an empty active workout exit without enabling an invalid save", async () => {
     localStorage.setItem(
-      "workout-active-session",
+      "workout-active-session:user-1",
       JSON.stringify({
         exerciseBlocks: [],
         startTimeISO: "2026-07-14T08:00:00.000Z",
@@ -331,7 +346,7 @@ describe("workout finish flow", () => {
     );
 
     render(
-      <WorkoutProvider>
+      <WorkoutProvider userId="user-1">
         <WorkoutLogger />
         <FinishProbe />
       </WorkoutProvider>
@@ -355,7 +370,7 @@ describe("workout finish flow", () => {
     );
 
     render(
-      <WorkoutProvider>
+      <WorkoutProvider userId="user-1">
         <WorkoutLogger />
         <FinishProbe />
       </WorkoutProvider>
@@ -394,7 +409,7 @@ describe("workout finish flow", () => {
       });
 
     render(
-      <WorkoutProvider>
+      <WorkoutProvider userId="user-1">
         <FinishProbe />
       </WorkoutProvider>
     );

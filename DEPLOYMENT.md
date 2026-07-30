@@ -31,6 +31,22 @@ npx wrangler pages deploy .open-next --project-name=workout-app
 
 ## 資料庫
 
+Issue 10 的儲存診斷資料表需在部署前套用：
+
+```bash
+npx wrangler d1 execute workout-db --remote --file=./drizzle/0010_workout_save_events.sql
+```
+
+正式環境請設定 `WORKOUT_APP_VERSION`（建議使用 commit SHA）與
+`WORKOUT_MAINTAINER_USER_IDS`（逗號分隔的 Better Auth user ID 或 email），
+以啟用版本追蹤與維護者診斷查詢。
+
+診斷資料保留 30 天；可由受控的部署/維運排程執行：
+
+```bash
+npm run db:purge-save-events
+```
+
 ### 本地開發
 ```bash
 # 初始化本地 D1

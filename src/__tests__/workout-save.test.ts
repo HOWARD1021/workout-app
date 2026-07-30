@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildWorkoutLogs,
   getWorkoutSaveErrorMessage,
@@ -6,7 +6,11 @@ import {
   resolveExerciseForSave,
 } from "@/lib/workout-save";
 import type { ExerciseBlock } from "@/contexts/WorkoutContext";
-import { ApiError } from "@/lib/api";
+import { ApiError, fetchApi } from "@/lib/api";
+import {
+  enqueueWorkoutDiagnostic,
+  flushWorkoutDiagnostics,
+} from "@/lib/workout-diagnostics";
 
 const catalog = [
   {
@@ -44,6 +48,28 @@ const block: ExerciseBlock = {
 };
 
 describe("workout save helpers", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+
+    const storage = new Map<string, string>();
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      value: {
+        getItem: (key: string) => storage.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          storage.set(key, value);
+        },
+        removeItem: (key: string) => {
+          storage.delete(key);
+        },
+        clear: () => {
+          storage.clear();
+        },
+      },
+    });
+  });
+
   it("resolves exercises by catalog id or name", () => {
     expect(resolveExerciseForSave(block.exercise, catalog)?.id).toBe("exercise-1");
     expect(
@@ -87,5 +113,126 @@ describe("workout save helpers", () => {
     expect(getWorkoutSaveErrorMessage(new ApiError(500, "Failed"))).toBe(
       "伺服器暫時無法儲存，請稍後再試。"
     );
+  });
+
+  it("captures typed API error metadata from safe error payloads", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            error: "Request failed",
+            code: "D1_WRITE_FAILED",
+            errorReference: "save-123",
+            releaseVersion: "2026.07.26",
+          }),
+          {
+            status: 500,
+            headers: {
+              "Content-Type": "application/json",
+              "x-request-id": "request-123",
+            },
+          }
+        )
+      )
+    );
+
+    await expect(fetchApi("/workouts", { method: "POST" })).rejects.toMatchObject({
+      status: 500,
+      message: "Request failed",
+      code: "D1_WRITE_FAILED",
+      errorReference: "save-123",
+      requestId: "request-123",
+      releaseVersion: "2026.07.26",
+    });
+  });
+
+  it("includes the server reference in mapped save errors", () => {
+    expect(
+      getWorkoutSaveErrorMessage(
+        new ApiError(503, "Failed", {
+          errorReference: "save-123",
+        })
+      )
+    ).toBe("伺服器暫時無法儲存，請稍後再試。（參考編號：save-123）");
+  });
+
+  it("includes the release version when the server provides one", () => {
+    expect(
+      getWorkoutSaveErrorMessage(
+        new ApiError(503, "Failed", {
+          errorReference: "save-123",
+          releaseVersion: "release-42",
+        })
+      )
+    ).toBe(
+      "伺服器暫時無法儲存，請稍後再試。（參考編號：save-123，版本：release-42）"
+    );
+  });
+
+  it("queues sanitized workout diagnostics without storing raw workout details", () => {
+    getWorkoutSaveErrorMessage(
+      new ApiError(400, "Bench Press 80kg private note token=secret", {
+        code: "VALIDATION_FAILED",
+        errorReference: "save-456",
+        requestId: "request-456",
+        releaseVersion: "2026.07.26",
+      })
+    );
+
+    const queued = window.localStorage.getItem("workout-diagnostics-queue");
+    expect(queued).toContain("VALIDATION_FAILED");
+    expect(queued).toContain("save-456");
+    expect(queued).not.toContain("Bench Press");
+    expect(queued).not.toContain("80kg");
+    expect(queued).not.toContain("private note");
+    expect(queued).not.toContain("token=secret");
+  });
+
+  it("bounds and flushes the queued diagnostics batch", async () => {
+    for (let index = 0; index < 23; index += 1) {
+      enqueueWorkoutDiagnostic({
+        category: "api",
+        httpStatus: 500,
+        code: `ERR_${index}`,
+        errorReference: `save-${index}`,
+      });
+    }
+
+    const beforeFlush = JSON.parse(
+      window.localStorage.getItem("workout-diagnostics-queue") ?? "[]"
+    ) as Array<{ code?: string }>;
+
+    expect(beforeFlush).toHaveLength(20);
+    expect(beforeFlush[0]?.code).toBe("ERR_3");
+
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 202 }));
+
+    await expect(
+      flushWorkoutDiagnostics({ fetchImpl: fetchMock as typeof fetch })
+    ).resolves.toEqual({
+      sent: 10,
+      remaining: 10,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/workout-diagnostics",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+      })
+    );
+
+    const requestBody = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string) as {
+      events: Array<{ code?: string }>;
+    };
+    expect(requestBody.events).toHaveLength(10);
+    expect(requestBody.events[0]?.code).toBe("ERR_3");
+
+    const afterFlush = JSON.parse(
+      window.localStorage.getItem("workout-diagnostics-queue") ?? "[]"
+    ) as Array<{ code?: string }>;
+    expect(afterFlush).toHaveLength(10);
+    expect(afterFlush[0]?.code).toBe("ERR_13");
   });
 });

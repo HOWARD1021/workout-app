@@ -75,6 +75,7 @@ vi.mock("@/lib/db", () => {
     workoutTemplates: { id: "workout_templates.id" },
     workouts: tables.workouts,
     workoutLogs: tables.workoutLogs,
+    workoutSaveEvents: "workout_save_events",
   };
 });
 
@@ -102,7 +103,7 @@ describe("workouts API", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(batch).toHaveBeenCalledOnce();
+    expect(batch).toHaveBeenCalledTimes(2);
     expect(batch.mock.calls[0][0]).toHaveLength(2);
     await expect(response.json()).resolves.toEqual({
       ...workoutRow,

@@ -1,5 +1,6 @@
 import type { Exercise } from "@/lib/api";
 import type { ExerciseBlock } from "@/contexts/WorkoutContext";
+import { enqueueWorkoutDiagnostic } from "@/lib/workout-diagnostics";
 
 export interface WorkoutLogInput {
   exercise_id: string;
@@ -75,7 +76,16 @@ export function rehydrateExerciseBlocks(
   });
 }
 
-export function getWorkoutSaveErrorMessage(error: unknown): string {
+export function getWorkoutSaveErrorMessage(
+  error: unknown,
+  diagnosticContext?: { submissionId?: string }
+): string {
+  try {
+    queueWorkoutSaveDiagnostic(error, diagnosticContext?.submissionId);
+  } catch {
+    // A storage quota or privacy-mode failure must not hide the save error.
+  }
+
   if (error && typeof error === "object" && "status" in error) {
     const status = Number((error as { status: number }).status);
     const message =
@@ -84,15 +94,18 @@ export function getWorkoutSaveErrorMessage(error: unknown): string {
         : null;
 
     if (status === 401) {
-      return "登入已過期，請重新登入後再儲存。";
+      return withErrorReference("登入已過期，請重新登入後再儲存。", error);
     }
     if (status === 400) {
-      return message || "訓練資料有誤，請重新選擇動作後再試。";
+      return withErrorReference(
+        message || "訓練資料有誤，請重新選擇動作後再試。",
+        error
+      );
     }
     if (status >= 500) {
-      return "伺服器暫時無法儲存，請稍後再試。";
+      return withErrorReference("伺服器暫時無法儲存，請稍後再試。", error);
     }
-    if (message) return message;
+    if (message) return withErrorReference(message, error);
   }
 
   if (error instanceof DOMException && error.name === "AbortError") {
@@ -100,4 +113,61 @@ export function getWorkoutSaveErrorMessage(error: unknown): string {
   }
 
   return "儲存訓練失敗，請檢查連線後再試一次。";
+}
+
+function queueWorkoutSaveDiagnostic(error: unknown, submissionId?: string): void {
+  const category =
+    error instanceof DOMException && error.name === "AbortError"
+      ? "abort"
+      : error && typeof error === "object" && "status" in error
+        ? "api"
+        : error instanceof Error
+          ? "network"
+          : "unknown";
+
+  const status =
+    error && typeof error === "object" && "status" in error
+      ? Number((error as { status: number }).status)
+      : undefined;
+
+  const code = readStringProperty(error, "code");
+  const errorReference = readStringProperty(error, "errorReference");
+  const requestId = readStringProperty(error, "requestId");
+  const releaseVersion = readStringProperty(error, "releaseVersion");
+
+  enqueueWorkoutDiagnostic({
+    category,
+    httpStatus: Number.isFinite(status) ? status : undefined,
+    code,
+    errorReference,
+    requestId,
+    submissionId,
+    releaseVersion,
+  });
+}
+
+function readStringProperty(
+  value: unknown,
+  key: "code" | "errorReference" | "requestId" | "releaseVersion"
+): string | undefined {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  const candidate = (value as Record<string, unknown>)[key];
+  return typeof candidate === "string" && candidate.trim().length > 0
+    ? candidate.trim()
+    : undefined;
+}
+
+function withErrorReference(message: string, error: unknown): string {
+  const errorReference = readStringProperty(error, "errorReference");
+  const releaseVersion = readStringProperty(error, "releaseVersion");
+  if (!errorReference || message.includes(errorReference)) {
+    return message;
+  }
+
+  return `${message}（參考編號：${errorReference}${
+    releaseVersion ? `，版本：${releaseVersion}` : ""
+  }）`;
 }

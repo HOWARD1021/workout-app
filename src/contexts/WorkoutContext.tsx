@@ -16,6 +16,7 @@ import {
   getWorkoutSaveErrorMessage,
   rehydrateExerciseBlocks,
 } from "@/lib/workout-save";
+import { flushWorkoutDiagnostics } from "@/lib/workout-diagnostics";
 import { usePreviousExerciseData } from "@/hooks/usePreviousExerciseData";
 import {
   useTemplateDetails,
@@ -187,16 +188,16 @@ interface PersistedWorkout {
   submissionId?: string;
 }
 
-function saveSession(data: PersistedWorkout | null) {
+function saveSession(storageKey: string, data: PersistedWorkout | null) {
   try {
-    if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    else localStorage.removeItem(STORAGE_KEY);
+    if (data) localStorage.setItem(storageKey, JSON.stringify(data));
+    else localStorage.removeItem(storageKey);
   } catch {}
 }
 
-function loadSession(): PersistedWorkout | null {
+function loadSession(storageKey: string): PersistedWorkout | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey);
     return raw ? (JSON.parse(raw) as PersistedWorkout) : null;
   } catch {
     return null;
@@ -212,10 +213,17 @@ export function useWorkout() {
 }
 
 // ── Provider ───────────────────────────────────────────
-export function WorkoutProvider({ children }: { children: ReactNode }) {
+export function WorkoutProvider({
+  children,
+  userId,
+}: {
+  children: ReactNode;
+  userId: string;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const restoredRef = useRef(false);
+  const storageKey = `${STORAGE_KEY}:${encodeURIComponent(userId)}`;
 
   // ── Core workout state ──
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
@@ -351,7 +359,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
-    const saved = loadSession();
+    const saved = loadSession(storageKey);
     if (saved) {
       setIsWorkoutActive(true);
       setExerciseBlocks(saved.exerciseBlocks);
@@ -361,22 +369,22 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       setTemplateLoaded(true);
     }
     setIsRestored(true);
-  }, []);
+  }, [storageKey]);
 
   // ── Persist session to localStorage on changes ──
   useEffect(() => {
     if (!restoredRef.current) return;
     if (isWorkoutActive && startTime) {
-      saveSession({
+      saveSession(storageKey, {
         exerciseBlocks,
         startTimeISO: startTime.toISOString(),
         templateId,
         submissionId: submissionId || undefined,
       });
     } else if (!isWorkoutActive) {
-      saveSession(null);
+      saveSession(storageKey, null);
     }
-  }, [isWorkoutActive, exerciseBlocks, startTime, templateId, submissionId]);
+  }, [storageKey, isWorkoutActive, exerciseBlocks, startTime, templateId, submissionId]);
 
   // ── Warn before closing tab ──
   useEffect(() => {
@@ -745,7 +753,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       setShowTimeoutPrompt(false);
       setShowClosePrompt(false);
       setSaveError(null);
-      saveSession(null);
+      saveSession(storageKey, null);
+      void flushWorkoutDiagnostics().catch(() => {});
 
       if (saveResult.skippedLogs && saveResult.skippedLogs > 0) {
         toast.warning("部分組數因動作資料失效未儲存，其餘紀錄已保存。");
@@ -758,7 +767,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       return true;
     } catch (error) {
       console.error("Failed to save workout:", error);
-      const message = getWorkoutSaveErrorMessage(error);
+      const message = getWorkoutSaveErrorMessage(error, { submissionId: submissionId || undefined });
       setSaveError(message);
       toast.error(message);
       return false;
@@ -766,7 +775,7 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
       finishInProgressRef.current = false;
       setIsFinishing(false);
     }
-  }, [startTime, exerciseBlocks, exercises, templateId, submissionId, calculateSummary, stopRestTimer]);
+  }, [startTime, exerciseBlocks, exercises, templateId, submissionId, storageKey, calculateSummary, stopRestTimer]);
 
   // Stable ref so the auto-finish timer can call the latest finishWorkout
   const finishWorkoutRef = useRef(finishWorkout);
@@ -784,8 +793,8 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     setShowTimeoutPrompt(false);
     setShowClosePrompt(false);
     setSaveError(null);
-    saveSession(null);
-  }, [stopRestTimer]);
+    saveSession(storageKey, null);
+  }, [storageKey, stopRestTimer]);
 
   const requestCloseWorkout = useCallback(() => {
     if (!isWorkoutActive || isFinishing) return;

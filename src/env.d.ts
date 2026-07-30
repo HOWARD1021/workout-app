@@ -12,6 +12,8 @@ declare global {
     IMAGE_MODEL?: string;
     POLAR_ACCESS_TOKEN: string;
     POLAR_WEBHOOK_SECRET: string;
+    WORKOUT_APP_VERSION?: string;
+    WORKOUT_MAINTAINER_USER_IDS?: string;
   }
 }
 

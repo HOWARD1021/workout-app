@@ -123,6 +123,24 @@ export const workouts = sqliteTable("workouts", {
   deletedAt: text("deleted_at"),
 });
 
+// Sanitized workout save attempts used for incident correlation.
+export const workoutSaveEvents = sqliteTable("workout_save_events", {
+  id: text("id").primaryKey(),
+  errorReference: text("error_reference").notNull(),
+  requestId: text("request_id").notNull(),
+  submissionId: text("submission_id"),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  operation: text("operation").notNull(),
+  status: text("status").notNull(),
+  errorCode: text("error_code"),
+  httpStatus: integer("http_status").notNull(),
+  releaseVersion: text("release_version").notNull(),
+  context: text("context").notNull(),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
 // workout_logs 詳細組數記錄
 export const workoutLogs = sqliteTable("workout_logs", {
   id: text("id")
@@ -214,11 +232,101 @@ export const activityFeed = sqliteTable("activity_feed", {
     .default(sql`(datetime('now'))`),
 });
 
+// training_goals 使用單一 active/archived 記錄保存一個目標週期，
+// 避免調整目標時覆寫既有的成長證據。
+export const trainingGoals = sqliteTable("training_goals", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  type: text("type", {
+    enum: ["strength", "frequency", "volume"],
+  }).notNull(),
+  name: text("name"),
+  exerciseId: text("exercise_id").references(() => exercises.id, {
+    onDelete: "no action",
+  }),
+  baseline: real("baseline").notNull(),
+  target: real("target").notNull(),
+  windowWeeks: integer("window_weeks").notNull().default(8),
+  startsAt: text("starts_at").notNull(),
+  endsAt: text("ends_at").notNull(),
+  status: text("status", {
+    enum: ["active", "archived", "replaced"],
+  })
+    .notNull()
+    .default("active"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+  archivedAt: text("archived_at"),
+});
+
+// 一筆 weekly_goal_sets 可攜帶多個胸/背/腿等 action，actions 保存可追蹤的
+// exerciseId、muscleGroup 與 expectedSessions，不讓每個 action 變成一個孤立計畫。
+export const weeklyGoalSets = sqliteTable("weekly_goal_sets", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  goalId: text("goal_id")
+    .notNull()
+    .references(() => trainingGoals.id, { onDelete: "cascade" }),
+  weekStart: text("week_start").notNull(),
+  status: text("status", {
+    enum: ["suggested", "accepted", "adjusted"],
+  })
+    .notNull()
+    .default("suggested"),
+  actions: text("actions").notNull(),
+  acceptedAt: text("accepted_at"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export const goalAdjustmentEvents = sqliteTable("goal_adjustment_events", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  goalId: text("goal_id")
+    .notNull()
+    .references(() => trainingGoals.id, { onDelete: "cascade" }),
+  kind: text("kind", {
+    enum: ["target", "window", "replacement"],
+  }).notNull(),
+  previousTarget: real("previous_target"),
+  newTarget: real("new_target"),
+  previousWindowWeeks: integer("previous_window_weeks"),
+  newWindowWeeks: integer("new_window_weeks"),
+  previousExerciseId: text("previous_exercise_id"),
+  newExerciseId: text("new_exercise_id"),
+  note: text("note"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
 // Type exports
 export type Exercise = typeof exercises.$inferSelect;
 export type NewExercise = typeof exercises.$inferInsert;
 export type Workout = typeof workouts.$inferSelect;
 export type NewWorkout = typeof workouts.$inferInsert;
+export type WorkoutSaveEvent = typeof workoutSaveEvents.$inferSelect;
+export type NewWorkoutSaveEvent = typeof workoutSaveEvents.$inferInsert;
 export type WorkoutLog = typeof workoutLogs.$inferSelect;
 export type NewWorkoutLog = typeof workoutLogs.$inferInsert;
 export type WorkoutTemplate = typeof workoutTemplates.$inferSelect;
@@ -228,3 +336,9 @@ export type Achievement = typeof achievements.$inferSelect;
 export type UserAchievement = typeof userAchievements.$inferSelect;
 export type Friendship = typeof friendships.$inferSelect;
 export type ActivityFeedItem = typeof activityFeed.$inferSelect;
+export type TrainingGoal = typeof trainingGoals.$inferSelect;
+export type NewTrainingGoal = typeof trainingGoals.$inferInsert;
+export type WeeklyGoalSet = typeof weeklyGoalSets.$inferSelect;
+export type NewWeeklyGoalSet = typeof weeklyGoalSets.$inferInsert;
+export type GoalAdjustmentEvent = typeof goalAdjustmentEvents.$inferSelect;
+export type NewGoalAdjustmentEvent = typeof goalAdjustmentEvents.$inferInsert;

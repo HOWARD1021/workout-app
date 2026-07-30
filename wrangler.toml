@@ -8,11 +8,10 @@ main = ".open-next/worker.js"
 # Assets configuration
 [assets]
 directory = ".open-next/assets"
-binding = "STATIC_ASSETS"
+binding = "ASSETS"
 
 # D1 Database binding
 [[d1_databases]]
 binding = "DB"
 database_name = "workout-db"
 database_id = "94c0f610-8616-4105-9d25-93ffcdb13d3c"
-
