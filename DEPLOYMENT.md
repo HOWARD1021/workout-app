@@ -5,6 +5,18 @@
 - **Backend**: Cloudflare Workers + D1 Database
 - **Hosting**: Cloudflare Workers（Worker 會透過 ASSETS binding 提供前端資產）
 
+## 正式環境
+
+- **正式網址**: `https://louvrerobbery.uk`
+- **Cloudflare Worker**: `workout-app`
+- **D1 Database**: `workout-db`
+- **Custom domain route**: `louvrerobbery.uk/` 與 `louvrerobbery.uk/*` 皆指向
+  `workout-app`
+
+不要把 `workers.dev`、`pages.dev` 或 Vercel 網址當成使用者驗收網址，除非是刻意做底層診斷。
+Cloudflare DNS/診斷裡可能會看到 `pages.dev` hostname；正式驗收仍以 `https://louvrerobbery.uk`
+為準。
+
 ## 部署方式
 
 ### 手動部署（推薦）
@@ -17,6 +29,16 @@ npm run deploy:cf
 Cloudflare Worker bundle，不是 Pages 靜態網站輸出；Pages 上傳會讓 `/api/*` 路由失效。
 若要設定 GitHub 自動部署，請讓 CI 執行 `npm run deploy:cf`，並使用具備 Workers 與 D1
 權限的 Cloudflare token。
+
+### 部署後驗證
+
+```bash
+curl -I https://louvrerobbery.uk/
+curl -i https://louvrerobbery.uk/api/health
+curl -i https://louvrerobbery.uk/api/goals/review
+```
+
+`/api/goals/review` 是受保護 API；未登入時應回 `401`，不應回 `500`。
 
 ## 重要檔案
 - `wrangler.toml` - Cloudflare Worker 與 D1 配置
