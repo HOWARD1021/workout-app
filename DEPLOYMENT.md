@@ -3,38 +3,33 @@
 ## 架構
 - **Frontend**: Next.js 15 + OpenNext (Cloudflare 適配)
 - **Backend**: Cloudflare Workers + D1 Database
-- **Hosting**: Cloudflare Pages
+- **Hosting**: Cloudflare Workers（Worker 會透過 ASSETS binding 提供前端資產）
 
 ## 部署方式
 
-### 方式一：手動部署（推薦）
+### 手動部署（推薦）
 ```bash
-# 1. 建置 OpenNext
-npm run build:cf
-
-# 2. 部署到 Cloudflare Pages
-npx wrangler pages deploy .open-next --project-name=workout-app
+# 建置並部署 OpenNext Worker
+npm run deploy:cf
 ```
 
-### 方式二：GitHub 自動部署
-需要在 Cloudflare Pages Dashboard 設定：
-- **Build command**: `npm run build:cf`
-- **Build output directory**: `.open-next`
-- **Production branch**: `main`
-
-⚠️ 注意：如果專案原本是用直接上傳方式建立，連結 GitHub 後需要手動設定 build 配置。
+⚠️ 注意：不要使用 `wrangler pages deploy .open-next` 部署這個專案。`.open-next` 是
+Cloudflare Worker bundle，不是 Pages 靜態網站輸出；Pages 上傳會讓 `/api/*` 路由失效。
+若要設定 GitHub 自動部署，請讓 CI 執行 `npm run deploy:cf`，並使用具備 Workers 與 D1
+權限的 Cloudflare token。
 
 ## 重要檔案
-- `wrangler.toml` - Cloudflare 配置，包含 `pages_build_output_dir`
+- `wrangler.toml` - Cloudflare Worker 與 D1 配置
 - `open-next.config.ts` - OpenNext 配置
 - `.open-next/` - 建置輸出目錄（不要 commit）
 
 ## 資料庫
 
-Issue 10 的儲存診斷資料表需在部署前套用：
+新增功能的 D1 migration 需在 Worker 部署前套用：
 
 ```bash
 npx wrangler d1 execute workout-db --remote --file=./drizzle/0010_workout_save_events.sql
+npx wrangler d1 execute workout-db --remote --file=./drizzle/0011_training_review_goals.sql
 ```
 
 正式環境請設定 `WORKOUT_APP_VERSION`（建議使用 commit SHA）與
@@ -68,7 +63,8 @@ wrangler d1 execute workout-db --remote --file=./drizzle/seed.sql
 ## 常見問題
 
 ### Q: 推送到 GitHub 後沒有自動部署？
-A: 檢查 Cloudflare Pages Dashboard 的 Build settings，確保 build command 和 output directory 正確設定。
+A: 這個專案目前不是 Pages Git build；請在 CI 執行 `npm run deploy:cf`，並確認 Cloudflare
+token 同時具備 Workers 部署與 D1 執行權限。
 
 ### Q: 本地沒有模板資料？
 A: 執行 `wrangler d1 execute workout-db --local --file=./drizzle/0002_seed_templates.sql`
