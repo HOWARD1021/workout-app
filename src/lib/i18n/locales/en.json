@@ -126,6 +126,15 @@
   "reminder": {
     "title": "Hey!",
     "message": "It's been {days} days since your last workout!",
+    "lastWorkout": "Last workout",
+    "lastWorkoutValue": "{date} ({days}d ago)",
+    "monthlyFee": "Monthly fee",
+    "monthlyFeeValue": "${fee} / mo",
+    "costThisMonth": "Cost per visit this month",
+    "costThisMonthValue": "${cost}",
+    "wastedThisMonth": "Zero visits this month — ${fee} basically wasted",
+    "costClimbs": "The longer you wait, the pricier each visit gets 📈",
+    "setupCost": "Add your fee to see cost per visit →",
     "startNow": "Start Working Out 💪",
     "later": "Remind Later"
   },

@@ -126,6 +126,15 @@
   "reminder": {
     "title": "嘿！",
     "message": "你已經 {days} 天沒來運動了！",
+    "lastWorkout": "上次運動",
+    "lastWorkoutValue": "{date}（{days} 天前）",
+    "monthlyFee": "月費",
+    "monthlyFeeValue": "${fee} / 月",
+    "costThisMonth": "本月每次成本",
+    "costThisMonthValue": "${cost}",
+    "wastedThisMonth": "本月一次都沒去，${fee} 等於白繳了",
+    "costClimbs": "越晚去，每次越貴 📈",
+    "setupCost": "設定會員費，算出每次運動成本 →",
     "startNow": "現在開始運動 💪",
     "later": "稍後提醒"
   },

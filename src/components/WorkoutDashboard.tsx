@@ -40,6 +40,9 @@ interface Stats {
   hearts: number;
   daysSinceLastWorkout: number;
   thisWeekWorkouts: number;
+  lastWorkoutDate: string | null;
+  monthlyFee: number | null;
+  thisMonthWorkouts: number;
 }
 
 export default function WorkoutDashboard() {
@@ -127,23 +130,24 @@ export default function WorkoutDashboard() {
         return d >= weekStart;
       }).length;
 
-      setStats({
-        total_sessions: allWorkouts.length,
-        total_volume_kg: Math.round(totalVolume),
-        streak_days: streakDays,
-        hearts: 70,
-        daysSinceLastWorkout,
-        thisWeekWorkouts,
-      });
+      // Calculate this calendar month's workouts (drives cost-per-visit feedback)
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const thisMonthWorkouts = allWorkouts.filter((w) => {
+        const d = new Date(w.startedAt);
+        return d >= monthStart;
+      }).length;
 
-      // Show inactivity reminder if > 2 days since last workout
-      if (daysSinceLastWorkout > 2) {
-        setShowInactivityReminder(true);
-      }
+      const lastWorkoutDate = allWorkouts.length > 0 ? allWorkouts[0].startedAt : null;
 
-      // Calculate membership cost per visit
+      // Membership: normalize fee to a monthly figure so yearly plans compare fairly
       const membership = loadMembership();
+      let monthlyFee: number | null = null;
       if (membership) {
+        monthlyFee =
+          membership.period === "monthly"
+            ? membership.cost
+            : Math.round(membership.cost / 12);
+
         const workoutsSinceMembership = allWorkouts.filter(
           (w) => new Date(w.startedAt) >= new Date(membership.startDate)
         ).length;
@@ -151,6 +155,23 @@ export default function WorkoutDashboard() {
           const mStats = calculateMembershipStats(membership, workoutsSinceMembership);
           setCostPerVisit(mStats.costPerVisit);
         }
+      }
+
+      setStats({
+        total_sessions: allWorkouts.length,
+        total_volume_kg: Math.round(totalVolume),
+        streak_days: streakDays,
+        hearts: 70,
+        daysSinceLastWorkout,
+        thisWeekWorkouts,
+        lastWorkoutDate,
+        monthlyFee,
+        thisMonthWorkouts,
+      });
+
+      // Show inactivity reminder if > 2 days since last workout
+      if (daysSinceLastWorkout > 2) {
+        setShowInactivityReminder(true);
       }
     } catch (error) {
       console.error("Failed to fetch workout data:", error);
@@ -400,11 +421,18 @@ export default function WorkoutDashboard() {
       {showInactivityReminder && stats && (
         <InactivityReminder
           daysSinceLastWorkout={stats.daysSinceLastWorkout}
+          lastWorkoutDate={stats.lastWorkoutDate}
+          monthlyFee={stats.monthlyFee}
+          thisMonthWorkouts={stats.thisMonthWorkouts}
           onStartWorkout={() => {
             setShowInactivityReminder(false);
             setShowTemplateSelector(true);
           }}
           onDismiss={() => setShowInactivityReminder(false)}
+          onSetupCost={() => {
+            setShowInactivityReminder(false);
+            router.push("/membership");
+          }}
         />
       )}
     </div>
