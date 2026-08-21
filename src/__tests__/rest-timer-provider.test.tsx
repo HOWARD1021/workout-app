@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 import { WorkoutProvider, useWorkout } from "@/contexts/WorkoutContext";
 import * as api from "@/lib/api";
 
@@ -31,45 +32,15 @@ vi.mock("sonner", () => ({
   },
 }));
 
-let resolveAudioResume!: () => void;
-let oscillatorStarts = 0;
 let postServiceWorkerMessage: ReturnType<typeof vi.fn>;
 
-class DeferredAudioContext {
-  state: AudioContextState = "suspended";
+// Minimal AudioContext stub so the provider's interaction-time init succeeds.
+// The actual rest/reward cues are delegated to uisfx and are not exercised here.
+class StubAudioContext {
+  state: AudioContextState = "running";
   currentTime = 0;
   destination = {};
-  resume = vi.fn(
-    () =>
-      new Promise<void>((resolve) => {
-        resolveAudioResume = () => {
-          this.state = "running";
-          resolve();
-        };
-      })
-  );
-
-  createOscillator() {
-    return {
-      connect: vi.fn(),
-      frequency: { value: 0 },
-      type: "sine" as OscillatorType,
-      start: vi.fn(() => {
-        oscillatorStarts += 1;
-      }),
-      stop: vi.fn(),
-    };
-  }
-
-  createGain() {
-    return {
-      connect: vi.fn(),
-      gain: {
-        setValueAtTime: vi.fn(),
-        exponentialRampToValueAtTime: vi.fn(),
-      },
-    };
-  }
+  resume = vi.fn(() => Promise.resolve());
 }
 
 function TimerProbe() {
@@ -80,7 +51,6 @@ function TimerProbe() {
 describe("rest timer provider alerts", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    oscillatorStarts = 0;
     const storage = new Map<string, string>();
     vi.stubGlobal("localStorage", {
       getItem: (key: string) => storage.get(key) ?? null,
@@ -97,7 +67,7 @@ describe("rest timer provider alerts", () => {
     Object.defineProperty(window, "AudioContext", {
       configurable: true,
       writable: true,
-      value: DeferredAudioContext,
+      value: StubAudioContext,
     });
   });
 
@@ -108,7 +78,7 @@ describe("rest timer provider alerts", () => {
     vi.restoreAllMocks();
   });
 
-  it("waits for AudioContext resume before playing the rest alert", async () => {
+  it("fires the rest-over alert when the timer completes", async () => {
     render(
       <WorkoutProvider userId="user-1">
         <TimerProbe />
@@ -117,18 +87,18 @@ describe("rest timer provider alerts", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "start timer" }));
 
+    expect(toast.success).not.toHaveBeenCalled();
+
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1_000);
     });
 
-    expect(oscillatorStarts).toBe(0);
-
-    resolveAudioResume();
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    expect(oscillatorStarts).toBeGreaterThan(0);
+    // The audio cue itself is delegated to uisfx (best-effort, browser-only);
+    // the durable, observable contract is that the rest-over alert fires.
+    expect(toast.success).toHaveBeenCalledWith(
+      expect.stringContaining("休息結束"),
+      expect.anything()
+    );
   });
 
   it("stops the background timer when the page completes the alert", async () => {

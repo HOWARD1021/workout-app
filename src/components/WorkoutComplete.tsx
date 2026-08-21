@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback, useState, useRef } from "react";
 import confetti from "canvas-confetti";
+import { playRewardSfx } from "@/lib/sfx";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -97,6 +98,8 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
   useEffect(() => {
     // Fire confetti on mount
     fireConfetti();
+    // Reward cue to celebrate the finished workout
+    playRewardSfx();
 
     // Check for new achievements
     if (!hasChecked.current) {

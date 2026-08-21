@@ -1,9 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  SFX_PACKS,
+  getSfxSettings,
+  getSfxServerSnapshot,
+  subscribeSfx,
+  setSfxEnabled,
+  setSfxPack,
+  setSfxVolume,
+  previewSfx,
+  type SfxSettings,
+} from "@/lib/sfx";
 import {
   Check,
   Plus,
@@ -18,6 +36,8 @@ import {
   Bell,
   BellOff,
   MessageSquare,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import {
   DndContext,
@@ -306,6 +326,29 @@ export default function WorkoutLogger() {
       : "unsupported"
   );
 
+  // Sound settings live in an external store (localStorage-backed); subscribe
+  // so the card reflects changes and stays SSR-safe via the server snapshot.
+  const sfx = useSyncExternalStore(
+    subscribeSfx,
+    getSfxSettings,
+    getSfxServerSnapshot
+  );
+
+  const handleToggleSfx = () => {
+    const enabled = !sfx.enabled;
+    setSfxEnabled(enabled);
+    if (enabled) previewSfx();
+  };
+
+  const handleChangeSfxPack = (pack: SfxSettings["pack"]) => {
+    setSfxPack(pack);
+    previewSfx();
+  };
+
+  const handleChangeSfxVolume = (volume: number) => {
+    setSfxVolume(volume);
+  };
+
   const handleEnableNotifications = async () => {
     if (!("Notification" in window)) return;
     const result = await Notification.requestPermission();
@@ -508,6 +551,94 @@ export default function WorkoutLogger() {
                 >
                   3s 測試
                 </Button>
+              )}
+            </div>
+            {/* Sound Effects */}
+            <div className="space-y-3 border-t border-[#ededf0] pt-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {sfx.enabled ? (
+                    <Volume2 className="h-4 w-4 text-[#248a3d]" />
+                  ) : (
+                    <VolumeX className="h-4 w-4 text-[#8e8e93]" />
+                  )}
+                  <span className="text-sm text-[#111111]">音效</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-pressed={sfx.enabled}
+                  className={`px-3 py-1 text-xs ${
+                    sfx.enabled
+                      ? "bg-[#111111] text-white hover:bg-[#242424]"
+                      : "bg-[#ededf0] text-[#111111] hover:bg-[#e0e0e6]"
+                  }`}
+                  onClick={handleToggleSfx}
+                >
+                  {sfx.enabled ? "已開啟" : "已關閉"}
+                </Button>
+              </div>
+
+              {sfx.enabled && (
+                <>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs text-[#6f6f78]">音色</span>
+                    <Select
+                      value={sfx.pack}
+                      onValueChange={(v) =>
+                        handleChangeSfxPack(v as SfxSettings["pack"])
+                      }
+                    >
+                      <SelectTrigger className="h-8 w-40 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SFX_PACKS.map((p) => (
+                          <SelectItem
+                            key={p.value}
+                            value={p.value}
+                            className="text-xs"
+                          >
+                            {p.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs text-[#6f6f78]">音量</span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="range"
+                        min={0}
+                        max={1}
+                        step={0.05}
+                        value={sfx.volume}
+                        aria-label="音量"
+                        onChange={(e) =>
+                          handleChangeSfxVolume(Number(e.target.value))
+                        }
+                        onPointerUp={() => previewSfx()}
+                        className="h-1 w-36 cursor-pointer accent-[#111111]"
+                      />
+                      <span className="w-8 text-right text-xs tabular-nums text-[#8e8e93]">
+                        {Math.round(sfx.volume * 100)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="bg-[#ededf0] px-3 py-1 text-xs text-[#111111] hover:bg-[#e0e0e6]"
+                      onClick={() => previewSfx()}
+                    >
+                      試聽
+                    </Button>
+                  </div>
+                </>
               )}
             </div>
           </CardContent>
