@@ -1,6 +1,10 @@
 #:schema node_modules/wrangler/config-schema.json
 
 name = "workout-app"
+# Account that owns workout-app / workout-db / the louvrerobbery.uk zone.
+# Pinned so `wrangler deploy` picks the right account non-interactively
+# (the auth token can see more than one account).
+account_id = "63198f63d50664023e78af2d617cea07"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 main = ".open-next/worker.js"
