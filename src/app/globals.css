@@ -209,3 +209,38 @@
 .animate-fade-in-up-delay-3 {
   animation: fade-in-up 0.8s ease-out 0.6s both;
 }
+
+/* Water tank and surge animations */
+@keyframes wave-slide {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes bubble-rise {
+  0% {
+    transform: translateY(0) scale(0.4);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  85% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-200px) scale(1.1);
+    opacity: 0;
+  }
+}
+
+.animate-wave-slide-slow {
+  animation: wave-slide 5s linear infinite;
+}
+
+.animate-wave-slide-fast {
+  animation: wave-slide 3.2s linear infinite;
+}
+
+.animate-bubble-rise {
+  animation: bubble-rise 2.4s ease-in infinite;
+}

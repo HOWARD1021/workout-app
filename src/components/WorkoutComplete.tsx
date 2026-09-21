@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Trophy, Clock, Dumbbell, TrendingUp, TrendingDown } from "lucide-react";
-import DuckMascot from "./DuckMascot";
+import DuckDepositTank from "./DuckDepositTank";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/lib/i18n";
 import { useI18n } from "@/lib/i18n";
@@ -164,9 +164,23 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
         <p className="text-white/80 text-lg">{t("complete.workoutComplete")}</p>
       </div>
 
-      {/* Duck Mascot */}
+      {/* Duck Water Tank Deposit Animation */}
       <div className="mb-6">
-        <DuckMascot variant={hasNewPRs ? "pr" : "complete"} size="xl" animate />
+        <DuckDepositTank
+          amount={summary.totalVolume > 0 ? summary.totalVolume : summary.totalSets}
+          unit={summary.totalVolume > 0 ? "kg" : isZh ? "組" : "Sets"}
+          label={
+            hasNewPRs
+              ? isZh
+                ? "🏆 破紀錄汗水存款"
+                : "🏆 PR Sweat Deposit"
+              : isZh
+              ? "🌊 今日汗水存款"
+              : "🌊 Sweat Deposit"
+          }
+          isPR={hasNewPRs}
+          variant={hasNewPRs ? "pr" : "complete"}
+        />
       </div>
 
       {/* Stats Card */}
