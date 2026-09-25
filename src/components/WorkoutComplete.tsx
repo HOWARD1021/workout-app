@@ -6,7 +6,8 @@ import { playRewardSfx } from "@/lib/sfx";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trophy, Clock, Dumbbell, TrendingUp, TrendingDown } from "lucide-react";
+import { Trophy, Clock, Dumbbell, TrendingUp, TrendingDown, Zap, Timer } from "lucide-react";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import DuckDepositTank from "./DuckDepositTank";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/lib/i18n";
@@ -155,74 +156,108 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
     ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#58CC02] to-[#46A302] flex flex-col items-center justify-center p-4">
-      {/* Celebration Header */}
-      <div className="text-center mb-6">
-        <h1 className="text-4xl font-black text-white mb-2">
-          {encouragement}
-        </h1>
-        <p className="text-white/80 text-lg">{t("complete.workoutComplete")}</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-[#7CE728] to-[#58CC02] flex flex-col items-center justify-center p-5 font-sans relative overflow-hidden">
+      
+      {/* Main White Card Container */}
+      <div className="w-full max-w-md bg-white rounded-[32px] p-5 pb-7 shadow-[0_12px_24px_rgba(0,0,0,0.15)] flex flex-col items-center text-center relative z-10 border-b-[6px] border-black/5">
+        
+        {/* Header Typography */}
+        <div className="mb-4 mt-2 select-none">
+          <h1 
+            className="text-4xl font-black text-white mb-1 tracking-wide leading-[1.1] drop-shadow-md whitespace-pre-line"
+            style={{ 
+              WebkitTextStroke: '2px #388E00', 
+              textShadow: '0 4px 0 #388E00, 0 8px 16px rgba(0,0,0,0.15)' 
+            }}
+          >
+            {isZh ? "完成訓練！" : "WORKOUT\nCOMPLETE!"}
+          </h1>
+          <p className="text-[#58CC02] font-black tracking-widest uppercase text-[13px] mt-2">
+            {encouragement}
+          </p>
+        </div>
 
-      {/* Duck Water Tank Deposit Animation */}
-      <div className="mb-6">
-        <DuckDepositTank
-          amount={summary.totalVolume > 0 ? summary.totalVolume : summary.totalSets}
-          unit={summary.totalVolume > 0 ? "kg" : isZh ? "組" : "Sets"}
-          label={
-            hasNewPRs
-              ? isZh
-                ? "🏆 破紀錄汗水存款"
-                : "🏆 PR Sweat Deposit"
-              : isZh
-              ? "🌊 今日汗水存款"
-              : "🌊 Sweat Deposit"
-          }
-          isPR={hasNewPRs}
-          variant={hasNewPRs ? "pr" : "complete"}
-        />
-      </div>
-
-      {/* Stats Card */}
-      <Card className="w-full max-w-sm bg-white/95 backdrop-blur border-0 shadow-xl">
-        <CardContent className="p-6">
-          {/* Main Stats */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-[#F7F7F7] rounded-xl p-3 text-center">
-              <Dumbbell className="h-5 w-5 text-[#58CC02] mx-auto mb-1" />
-              <p className="text-2xl font-bold text-[#2D3648]">
-                {summary.totalSets}
-              </p>
-              <p className="text-xs text-[#AFAFAF]">{isZh ? "組" : "Sets"}</p>
+        {/* Lottie Animation Area with Character */}
+        <div className="w-full relative flex flex-col items-center justify-center mt-2 mb-6">
+          <div className="absolute inset-0 z-0 flex items-center justify-center opacity-80 pointer-events-none scale-150">
+            <DotLottieReact
+              src="https://lottie.host/9f506e7a-36fb-40cd-a931-15c46da7227d/xQjS581n20.lottie"
+              loop
+              autoplay
+            />
+          </div>
+          <div className="relative z-10 scale-[1.02]">
+            <DuckDepositTank
+              amount={summary.totalVolume > 0 ? summary.totalVolume : summary.totalSets}
+              unit={summary.totalVolume > 0 ? "kg" : isZh ? "組" : "Sets"}
+              label={
+                hasNewPRs
+                  ? isZh
+                    ? "🏆 破紀錄汗水存款"
+                    : "🏆 PR Sweat Deposit"
+                  : isZh
+                  ? "🌊 今日汗水存款"
+                  : "🌊 Sweat Deposit"
+              }
+              isPR={hasNewPRs}
+              variant={hasNewPRs ? "pr" : "complete"}
+            />
+          </div>
+        </div>
+        
+        {/* Stats Section */}
+        <div className="flex w-full justify-between gap-3 select-none">
+          {/* Volume Card */}
+          <div className="flex-1 rounded-2xl overflow-hidden border-[3px] border-[#FFC800] flex flex-col shadow-sm">
+            <div className="bg-[#FFC800] text-white text-[10px] font-black py-1.5 uppercase tracking-widest leading-none flex items-center justify-center">
+              {isZh ? "總容量" : "Total Volume"}
             </div>
-            <div className="bg-[#F7F7F7] rounded-xl p-3 text-center">
-              <TrendingUp className="h-5 w-5 text-[#1CB0F6] mx-auto mb-1" />
-              <p className="text-2xl font-bold text-[#2D3648]">
-                {summary.totalVolume.toLocaleString()}
-              </p>
-              <p className="text-xs text-[#AFAFAF]">{isZh ? "總容量 kg" : "Volume kg"}</p>
-            </div>
-            <div className="bg-[#F7F7F7] rounded-xl p-3 text-center">
-              <Clock className="h-5 w-5 text-[#FF8C42] mx-auto mb-1" />
-              <p className="text-2xl font-bold text-[#2D3648]">
-                {formatDuration(summary.duration)}
-              </p>
-              <p className="text-xs text-[#AFAFAF]">{t("complete.duration")}</p>
-            </div>
-            <div className="bg-[#F7F7F7] rounded-xl p-3 text-center">
-              <span className="text-lg block mb-1">⚡</span>
-              <p className="text-2xl font-bold text-[#2D3648]">
-                {summary.duration > 0 ? Math.round(summary.totalVolume / (summary.duration / 60)) : 0}
-              </p>
-              <p className="text-xs text-[#AFAFAF]">{isZh ? "kg/分鐘" : "kg/min"}</p>
+            <div className="bg-white py-2.5 flex items-baseline justify-center gap-1 flex-1">
+              <Zap className="fill-[#FFC800] text-[#FFC800] w-4 h-4 self-center translate-y-[-1px]" />
+              <span className="text-slate-800 font-black text-[19px] tracking-tight">{summary.totalVolume.toLocaleString()}</span>
+              <span className="text-slate-500 font-bold text-[10px] ml-[1px]">kg</span>
             </div>
           </div>
 
-          {/* Muscle Group Breakdown */}
-          {summary.muscleGroups.length > 0 && (
-            <div className="mb-4">
-              <p className="text-xs font-medium text-[#AFAFAF] mb-2">{isZh ? "肌群分布" : "Muscle Groups"}</p>
-              <div className="flex rounded-full overflow-hidden h-3">
+          {/* Sets Card */}
+          <div className="flex-1 rounded-2xl overflow-hidden border-[3px] border-[#58CC02] flex flex-col shadow-sm">
+            <div className="bg-[#58CC02] text-white text-[10px] font-black py-1.5 uppercase tracking-widest leading-none flex items-center justify-center">
+              {isZh ? "總組數" : "Total Sets"}
+            </div>
+            <div className="bg-white py-2.5 flex items-center justify-center gap-1 flex-1">
+              <Dumbbell className="w-4 h-4 stroke-[2.5] text-[#58CC02]" />
+              <span className="text-slate-800 font-black text-[19px] tracking-tight">{summary.totalSets}</span>
+            </div>
+          </div>
+
+          {/* Duration Card */}
+          <div className="flex-1 rounded-2xl overflow-hidden border-[3px] border-[#1CB0F6] flex flex-col shadow-sm">
+            <div className="bg-[#1CB0F6] text-white text-[10px] font-black py-1.5 uppercase tracking-widest leading-none flex items-center justify-center">
+              {t("complete.duration")}
+            </div>
+            <div className="bg-white py-2.5 flex items-baseline justify-center gap-[2px] flex-1">
+              <Timer className="w-4 h-4 stroke-[2.5] text-[#1CB0F6] self-center translate-y-[-1px]" />
+              <span className="text-slate-800 font-black text-[19px] tracking-tight">
+                {Math.floor(summary.duration / 3600) > 0 && (
+                  <>
+                    {Math.floor(summary.duration / 3600)}
+                    <span className="text-xs font-bold text-slate-500 mx-[1px]">{isZh ? "時" : "h"}</span>
+                  </>
+                )}
+                {Math.floor((summary.duration % 3600) / 60)}
+                <span className="text-xs font-bold text-slate-500 ml-[1px]">{isZh ? "分" : "m"}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Muscle Group Breakdown */}
+        {summary.muscleGroups.length > 0 && (
+          <>
+            <div className="w-full h-px bg-slate-100 mt-6 mb-5" />
+            <div className="w-full text-left mb-2">
+              <p className="text-xs font-bold text-[#AFAFAF] mb-2">{isZh ? "肌群分布" : "Muscle Groups"}</p>
+              <div className="flex rounded-full overflow-hidden h-3 bg-slate-100 shadow-inner">
                 {summary.muscleGroups.map((mg, i) => {
                   const totalVol = summary.muscleGroups.reduce((s, m) => s + m.volume, 0);
                   const pct = totalVol > 0 ? (mg.volume / totalVol) * 100 : 0;
@@ -236,43 +271,46 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
                   );
                 })}
               </div>
-              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
+              <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2">
                 {summary.muscleGroups.map((mg, i) => (
-                  <span key={i} className="text-[10px] text-[#AFAFAF] flex items-center gap-1">
-                    <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: mg.color }} />
+                  <span key={i} className="text-[11px] font-bold text-[#AFAFAF] flex items-center gap-1.5">
+                    <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: mg.color }} />
                     {mg.name}
                   </span>
                 ))}
               </div>
             </div>
-          )}
+          </>
+        )}
 
-          {/* Exercise List */}
-          {summary.exercises.length > 0 && (
-            <div className="border-t border-[#E5E5E5] pt-3">
-              <h3 className="text-xs font-medium text-[#AFAFAF] mb-2 flex items-center gap-1">
-                <Trophy className="h-3.5 w-3.5" />
+        {/* Exercise List */}
+        {summary.exercises.length > 0 && (
+          <>
+            <div className="w-full h-px bg-slate-100 mt-5 mb-4" />
+            <div className="w-full text-left">
+              <h3 className="text-xs font-bold text-[#AFAFAF] mb-3 flex items-center gap-1.5">
+                <Trophy className="h-4 w-4" />
                 {t("complete.todayBest")}
               </h3>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {summary.exercises.map((ex, i) => (
                   <div
                     key={i}
-                    className={`flex justify-between items-center text-sm ${
-                      ex.isPR ? "bg-[#FFF8E1] rounded-lg px-2 py-1.5 -mx-2 border border-[#FFD700]" : ""
+                    className={`flex justify-between items-center text-sm px-3 py-1.5 ${
+                      ex.isPR ? "bg-[#FFF8E1] rounded-xl border-[1.5px] border-[#FFD700] shadow-sm" : ""
                     }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       {ex.isPR && <span className="text-sm shrink-0">🏆</span>}
-                      <span className="text-[#2D3648] truncate">{ex.name}</span>
-                      <span className="text-[10px] text-[#AFAFAF] shrink-0">{ex.totalSets}{isZh ? "組" : "s"}</span>
+                      <span className={`truncate ${ex.isPR ? "text-slate-800 font-black" : "text-slate-700 font-bold"}`}>{ex.name}</span>
+                      <span className="text-[11px] font-bold text-[#AFAFAF] shrink-0">{ex.totalSets}{isZh ? "組" : "s"}</span>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                      <span className={`font-bold ${ex.isPR ? "text-[#FF8C42]" : "text-[#58CC02]"}`}>
+                      <span className={`font-black text-base ${ex.isPR ? "text-[#FF8C42]" : "text-[#58CC02]"}`}>
                         {ex.maxWeight} kg
                       </span>
                       {ex.isPR && (
-                        <span className="text-[9px] font-bold text-[#FF8C42] bg-[#FF8C42]/10 px-1.5 py-0.5 rounded-full">
+                        <span className="text-[9px] font-black text-[#FF8C42] bg-[#FF8C42]/10 px-1.5 py-0.5 rounded-md uppercase tracking-wider">
                           PR!
                         </span>
                       )}
@@ -281,13 +319,13 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
                 ))}
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </>
+        )}
+      </div>
 
       {/* New PRs Celebration */}
       {hasNewPRs && (
-        <Card className="w-full max-w-sm bg-gradient-to-r from-[#FFD700] to-[#FF8C42] border-0 shadow-xl mt-4">
+        <Card className="w-full max-w-sm bg-gradient-to-r from-[#FFD700] to-[#FF8C42] border-0 shadow-xl mt-4 z-10">
           <CardContent className="p-4">
             <div className="text-center mb-3">
               <p className="text-2xl">🏆</p>
@@ -316,16 +354,18 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
 
       {/* Monthly Recap Notification */}
       {monthlyRecap && (
-        <MonthlyRecapCard
-          recap={monthlyRecap}
-          compact
-          className="w-full max-w-sm mt-4"
-        />
+        <div className="z-10 w-full flex justify-center">
+          <MonthlyRecapCard
+            recap={monthlyRecap}
+            compact
+            className="w-full max-w-sm mt-4"
+          />
+        </div>
       )}
 
       {/* Membership Cost Efficiency */}
       {costStats && (
-        <Card className="w-full max-w-sm bg-white/95 backdrop-blur border-0 shadow-xl mt-4">
+        <Card className="w-full max-w-sm bg-white/95 backdrop-blur border-0 shadow-xl mt-4 z-10">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-full bg-[#58CC02]/15 flex items-center justify-center">
@@ -356,7 +396,7 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
 
       {/* New Achievements */}
       {newAchievements.length > 0 && (
-        <div className="w-full max-w-sm mt-4">
+        <div className="w-full max-w-sm mt-4 z-10">
           <p className="text-white/80 text-sm font-bold text-center mb-2">
             🎉 {t("achievements.title")}
           </p>
@@ -377,16 +417,16 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
       )}
 
       {/* Action Buttons */}
-      <div className="w-full max-w-sm mt-6 space-y-3">
-        <Button
-          className="w-full py-6 bg-white text-[#58CC02] font-bold text-lg hover:bg-white/90"
+      <div className="w-full max-w-md mt-6 space-y-3 z-10">
+        <button 
           onClick={() => (onDone ? onDone() : router.push("/"))}
+          className="w-full bg-[#58CC02] text-white font-black text-xl rounded-2xl py-4 shadow-[0_6px_0_#46A302] hover:translate-y-[2px] hover:shadow-[0_4px_0_#46A302] active:translate-y-[6px] active:shadow-none transition-all uppercase tracking-widest border-2 border-white/20 select-none"
         >
           {t("complete.backHome")}
-        </Button>
+        </button>
         <Button
           variant="ghost"
-          className="w-full py-4 text-white/80 hover:text-white hover:bg-white/10"
+          className="w-full py-4 text-white/80 hover:text-white hover:bg-white/10 font-bold"
           onClick={() => router.push("/analytics")}
         >
           {t("complete.viewStats")}
