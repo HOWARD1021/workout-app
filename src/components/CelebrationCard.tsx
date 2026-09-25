@@ -2,7 +2,7 @@
 
 import React from "react";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
-import { Zap, Dumbbell, Timer } from "lucide-react";
+import { Zap, Dumbbell, Timer, Trophy } from "lucide-react";
 import DuckDepositTank from "./DuckDepositTank";
 
 export function CelebrationCard() {
@@ -80,6 +80,73 @@ export function CelebrationCard() {
             </div>
           </div>
         </div>
+        
+        {/* Separator / Divider */}
+        <div className="w-full h-px bg-slate-100 mt-6 mb-5" />
+
+        {/* Muscle Group Breakdown (Mocked) */}
+        <div className="w-full text-left mb-6">
+          <p className="text-xs font-bold text-[#AFAFAF] mb-2">肌群分布</p>
+          <div className="flex rounded-full overflow-hidden h-3 bg-slate-100 shadow-inner">
+            <div style={{ width: `45%`, backgroundColor: '#3b82f6' }} className="transition-all" />
+            <div style={{ width: `30%`, backgroundColor: '#f59e0b' }} className="transition-all" />
+            <div style={{ width: `25%`, backgroundColor: '#10b981' }} className="transition-all" />
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2">
+            <span className="text-[11px] font-bold text-[#AFAFAF] flex items-center gap-1.5">
+              <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#3b82f6' }} />
+              腿部
+            </span>
+            <span className="text-[11px] font-bold text-[#AFAFAF] flex items-center gap-1.5">
+              <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#f59e0b' }} />
+              核心
+            </span>
+            <span className="text-[11px] font-bold text-[#AFAFAF] flex items-center gap-1.5">
+              <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#10b981' }} />
+              背部
+            </span>
+          </div>
+        </div>
+
+        {/* Exercise List / Today's Best (Mocked) */}
+        <div className="w-full text-left">
+          <h3 className="text-xs font-bold text-[#AFAFAF] mb-3 flex items-center gap-1.5">
+            <Trophy className="h-4 w-4" />
+            今日最佳
+          </h3>
+          <div className="space-y-2">
+            {/* Exercise 1 */}
+            <div className="flex justify-between items-center text-sm bg-[#FFF8E1] rounded-xl px-3 py-2 border-[1.5px] border-[#FFD700] shadow-sm">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-sm shrink-0">🏆</span>
+                <span className="text-slate-800 font-black truncate">Deadlift</span>
+                <span className="text-[11px] font-bold text-[#AFAFAF] shrink-0">1組</span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                <span className="font-black text-[#FF8C42] text-base">
+                  105 kg
+                </span>
+                <span className="text-[9px] font-black text-[#FF8C42] bg-[#FF8C42]/10 px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                  PR!
+                </span>
+              </div>
+            </div>
+            
+            {/* Exercise 2 */}
+            <div className="flex justify-between items-center text-sm px-3 py-1.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-slate-700 font-bold truncate">Squat</span>
+                <span className="text-[11px] font-bold text-[#AFAFAF] shrink-0">3組</span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                <span className="font-black text-[#58CC02] text-base">
+                  80 kg
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* Continue Button */}
