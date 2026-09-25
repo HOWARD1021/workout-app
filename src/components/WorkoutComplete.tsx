@@ -156,57 +156,67 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
     ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#7CE728] to-[#58CC02] flex flex-col items-center justify-center p-5 font-sans relative overflow-hidden">
+    <div className="min-h-screen bg-[#8DF041] flex flex-col items-center justify-center p-5 font-sans relative overflow-hidden">
       
-      {/* Main White Card Container */}
-      <div className="w-full max-w-md bg-white rounded-[32px] p-5 pb-7 shadow-[0_12px_24px_rgba(0,0,0,0.15)] flex flex-col items-center text-center relative z-10 border-b-[6px] border-black/5">
+      {/* Background decorations (Mockup has some sparkles and blob shapes in the background) */}
+      <div className="absolute top-10 left-4 w-12 h-12 bg-white/20 rounded-full blur-xl pointer-events-none" />
+      <div className="absolute bottom-40 right-4 w-24 h-24 bg-white/20 rounded-full blur-2xl pointer-events-none" />
+
+      {/* Main Card Container */}
+      <div className="w-full max-w-md rounded-[36px] overflow-hidden shadow-[0_16px_32px_rgba(0,0,0,0.15)] flex flex-col relative z-10 border-b-[8px] border-black/10">
         
-        {/* Header Typography */}
-        <div className="mb-4 mt-2 select-none">
-          <h1 
-            className="text-4xl font-black text-white mb-1 tracking-wide leading-[1.1] drop-shadow-md whitespace-pre-line"
-            style={{ 
-              WebkitTextStroke: '2px #388E00', 
-              textShadow: '0 4px 0 #388E00, 0 8px 16px rgba(0,0,0,0.15)' 
-            }}
-          >
-            {isZh ? "完成訓練！" : "WORKOUT\nCOMPLETE!"}
-          </h1>
-          <p className="text-[#58CC02] font-black tracking-widest uppercase text-[13px] mt-2">
-            {encouragement}
-          </p>
+        {/* Top Half: Mint Green / Sky Area */}
+        <div className="bg-gradient-to-b from-[#A4F556] to-[#7CE728] relative w-full pt-8 pb-10 flex flex-col items-center">
+          {/* Header Typography */}
+          <div className="mb-2 mt-2 select-none text-center relative z-20">
+            <h1 
+              className="text-[40px] font-black text-white mb-1 tracking-wide leading-[1.05] drop-shadow-xl whitespace-pre-line"
+              style={{ 
+                WebkitTextStroke: '2px #388E00', 
+                textShadow: '0 5px 0 #388E00, 0 10px 20px rgba(0,0,0,0.2)' 
+              }}
+            >
+              {isZh ? "完成訓練！" : "WORKOUT\nCOMPLETE!"}
+            </h1>
+            <p className="text-[#388E00] font-black tracking-widest uppercase text-[14px] mt-3">
+              {encouragement}
+            </p>
+          </div>
+
+          {/* Lottie Animation Area with Character */}
+          <div className="w-full relative flex flex-col items-center justify-center mt-4 mb-2">
+            <div className="absolute inset-0 z-0 flex items-center justify-center opacity-90 pointer-events-none scale-150">
+              <DotLottieReact
+                src="https://lottie.host/9f506e7a-36fb-40cd-a931-15c46da7227d/xQjS581n20.lottie"
+                loop
+                autoplay
+              />
+            </div>
+            <div className="relative z-10 scale-[1.05]">
+              <DuckDepositTank
+                amount={summary.totalVolume > 0 ? summary.totalVolume : summary.totalSets}
+                unit={summary.totalVolume > 0 ? "kg" : isZh ? "組" : "Sets"}
+                label={
+                  hasNewPRs
+                    ? isZh
+                      ? "🏆 破紀錄汗水存款"
+                      : "🏆 PR Sweat Deposit"
+                    : isZh
+                    ? "🌊 今日汗水存款"
+                    : "🌊 Sweat Deposit"
+                }
+                isPR={hasNewPRs}
+                variant={hasNewPRs ? "pr" : "complete"}
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Lottie Animation Area with Character */}
-        <div className="w-full relative flex flex-col items-center justify-center mt-2 mb-6">
-          <div className="absolute inset-0 z-0 flex items-center justify-center opacity-80 pointer-events-none scale-150">
-            <DotLottieReact
-              src="https://lottie.host/9f506e7a-36fb-40cd-a931-15c46da7227d/xQjS581n20.lottie"
-              loop
-              autoplay
-            />
-          </div>
-          <div className="relative z-10 scale-[1.02]">
-            <DuckDepositTank
-              amount={summary.totalVolume > 0 ? summary.totalVolume : summary.totalSets}
-              unit={summary.totalVolume > 0 ? "kg" : isZh ? "組" : "Sets"}
-              label={
-                hasNewPRs
-                  ? isZh
-                    ? "🏆 破紀錄汗水存款"
-                    : "🏆 PR Sweat Deposit"
-                  : isZh
-                  ? "🌊 今日汗水存款"
-                  : "🌊 Sweat Deposit"
-              }
-              isPR={hasNewPRs}
-              variant={hasNewPRs ? "pr" : "complete"}
-            />
-          </div>
-        </div>
+        {/* Bottom Half: White Area */}
+        <div className="bg-white w-full px-5 py-6 flex flex-col items-center">
         
-        {/* Stats Section */}
-        <div className="flex w-full justify-between gap-3 select-none">
+          {/* Stats Section */}
+          <div className="flex w-full justify-between gap-3 select-none">
           {/* Volume Card */}
           <div className="flex-1 rounded-2xl overflow-hidden border-[3px] border-[#FFC800] flex flex-col shadow-sm">
             <div className="bg-[#FFC800] text-white text-[10px] font-black py-1.5 uppercase tracking-widest leading-none flex items-center justify-center">
@@ -321,6 +331,7 @@ export default function WorkoutComplete({ summary, onDone }: WorkoutCompleteProp
             </div>
           </>
         )}
+        </div>
       </div>
 
       {/* New PRs Celebration */}
