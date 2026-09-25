@@ -155,6 +155,28 @@
   .ios-secondary-button {
     @apply rounded-[14px] bg-white px-4 py-3 text-center text-base font-semibold text-[#111111] transition active:scale-[0.98];
   }
+
+  /* 
+   * GAMIFIED UI DESIGN PHILOSOPHY (Impeccable)
+   * The following classes encapsulate the Duolingo-style gamified UI language 
+   * used in celebratory and core screens (e.g., WorkoutComplete).
+   * 
+   * Principles:
+   * 1. High contrast, saturated colors (#58CC02 green, #FFC800 yellow, #1CB0F6 blue).
+   * 2. Heavy 3D tactile borders (border-b-[6px] or hard offset shadows).
+   * 3. Thick stroked typography for major display headers.
+   */
+  .game-button-primary {
+    @apply w-full bg-[#58CC02] text-white font-black text-xl rounded-2xl py-4 shadow-[0_6px_0_#46A302] hover:translate-y-[2px] hover:shadow-[0_4px_0_#46A302] active:translate-y-[6px] active:shadow-none transition-all uppercase tracking-widest border-2 border-white/20 select-none;
+  }
+
+  .game-card-3d {
+    @apply w-full rounded-[36px] overflow-hidden shadow-[0_16px_32px_rgba(0,0,0,0.15)] bg-white border-b-[8px] border-black/10;
+  }
+
+  .game-stat-card {
+    @apply flex-1 rounded-2xl overflow-hidden border-[3px] flex flex-col shadow-sm bg-white;
+  }
 }
 
 /* Duck mascot animations */

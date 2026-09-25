@@ -34,3 +34,17 @@ curl -i https://louvrerobbery.uk/api/goals/review
 ```
 
 Unauthenticated protected endpoints should return `401`, not `500`.
+
+## UI & Design Philosophy (Gamified "Impeccable" Style)
+
+This project adopts a highly gamified, "Duolingo-style" interface design philosophy for its celebratory and core workout components. Treat these principles as invariant when maintaining or creating new UI:
+
+- **Thick 3D Borders & Shadows:** Interactive elements (buttons, cards) must feel tangible. Use solid, thick borders (`border-[3px]` or `border-[4px]`) combined with prominent bottom shadows/borders (e.g., `border-b-[6px]` or `shadow-[0_6px_0_color]`) to create depth.
+- **Vibrant & Semantic Colors:** Rely on high-contrast, fully saturated colors.
+  - Green (Success/Action): `#58CC02`
+  - Yellow (Volume/Warning): `#FFC800`
+  - Blue (Time/Duration): `#1CB0F6`
+  - Orange/Gold (PRs/Achievements): `#FF8C42` / `#FFD700`
+- **Typography:** Display headings should be massive (`text-4xl` to `text-[40px]`), `font-black`, and often utilize CSS text-stroke (`WebkitTextStroke`) and heavy drop shadows to stand out against colorful backgrounds.
+- **Card Structures (Split-Tone):** Major milestone cards (like `WorkoutComplete`) avoid being just flat white. They use a split structure: a vibrant gradient top-half (e.g., Mint Green) that blends with the page background, and a structured white bottom-half for dense numerical data.
+- **Motion & Joy:** Loading states and transitions should be fluid. Always incorporate Lottie animations (e.g., confetti) and the mascot (`DuckDepositTank`) when the user completes a task or achieves a PR.
