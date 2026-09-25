@@ -192,11 +192,11 @@ export default function DuckDepositTank({
           ))}
         </div>
 
-        {/* Duck Mascot: Floats directly on the surging water surface */}
+        {/* Duck Mascot on Boat: Floats directly on the surging water surface */}
         <div
           className="absolute left-1/2 -translate-x-1/2 z-20 transition-all duration-[2000ms] ease-out pointer-events-none"
           style={{
-            bottom: `calc(${waterHeight}% - 26px)`,
+            bottom: `calc(${waterHeight}% - 30px)`,
           }}
         >
           {/* Bobbing and gentle wave motion on the water */}
@@ -205,7 +205,11 @@ export default function DuckDepositTank({
               isComplete ? "animate-duck-wave" : isSurging ? "animate-duck-breathe" : "animate-duck-float"
             }`}
           >
-            <DuckMascot variant={isPR ? "pr" : variant} size="lg" animate={false} />
+            <img 
+              src="/images/duck-boat-transparent.png" 
+              alt="Duck on a boat" 
+              className="w-32 h-32 object-contain drop-shadow-md"
+            />
           </div>
 
           {/* Ripple rings under the duck when resting on water */}

@@ -3,26 +3,26 @@
 import React from "react";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import { Zap, Target, Timer } from "lucide-react";
+import DuckDepositTank from "./DuckDepositTank";
 
 export function CelebrationCard() {
   return (
     <div className="min-h-screen bg-[#58CC02] flex items-center justify-center p-4 font-sans">
       <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl flex flex-col items-center text-center">
         {/* Lottie Animation Area with Character */}
-        <div className="w-64 h-64 mb-2 relative flex items-center justify-center">
+        <div className="w-full relative flex flex-col items-center justify-center mt-2 mb-6">
           {/* Confetti/Burst Animation overlaying the character */}
-          <DotLottieReact
-            src="https://lottie.host/9f506e7a-36fb-40cd-a931-15c46da7227d/xQjS581n20.lottie"
-            loop
-            autoplay
-            className="absolute inset-0 z-0 opacity-80"
-          />
-          {/* Character Image (Using mix-blend-multiply to remove white background) */}
-          <img 
-            src="/images/duck-complete.png" 
-            alt="Workout Complete" 
-            className="w-48 h-48 object-contain relative z-10 mix-blend-multiply"
-          />
+          <div className="absolute inset-0 z-0 flex items-center justify-center opacity-80 pointer-events-none scale-150">
+            <DotLottieReact
+              src="https://lottie.host/9f506e7a-36fb-40cd-a931-15c46da7227d/xQjS581n20.lottie"
+              loop
+              autoplay
+            />
+          </div>
+          {/* Tank Animation */}
+          <div className="relative z-10">
+            <DuckDepositTank amount={15} unit="XP" label="Workout Complete" />
+          </div>
         </div>
         
         {/* Text Section */}
