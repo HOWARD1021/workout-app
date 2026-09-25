@@ -28,8 +28,8 @@ const muscleGroupToDuck: Record<string, string> = {
   Legs: "/images/duck-legs.png",
   Arms: "/images/duck-arms.png",
   Shoulders: "/images/duck-arms.png",
-  Core: "/images/duck-mascot.png",
-  "Full Body": "/images/duck-mascot.png",
+  Core: "/images/duck-mascot-nobg.png",
+  "Full Body": "/images/duck-mascot-nobg.png",
 };
 
 const animationClasses: Record<AnimationStyle, string> = {
@@ -50,7 +50,7 @@ export default function DuckMascot({
   animationStyle = "bounce",
 }: DuckMascotProps) {
   // Determine which duck image to show
-  let duckImage = "/images/duck-mascot.png";
+  let duckImage = "/images/duck-mascot-nobg.png";
 
   if (variant === "complete") {
     duckImage = "/images/duck-complete.png";

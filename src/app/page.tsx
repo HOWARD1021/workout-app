@@ -6,6 +6,7 @@ import DuckMascot from "@/components/DuckMascot";
 import { WorkoutProvider } from "@/contexts/WorkoutContext";
 import { useSession } from "@/lib/auth-client";
 import { useTranslation } from "@/lib/i18n";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
 export default function Home() {
   const { data: session, isPending } = useSession();
@@ -21,10 +22,17 @@ export default function Home() {
 
   if (!session) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center gap-6 bg-white px-6">
-        {/* Mascot with floating animation */}
-        <div className="animate-fade-in-up">
-          <DuckMascot size="2xl" animationStyle="wave" />
+      <main className="min-h-screen flex flex-col items-center justify-center gap-6 bg-white px-6 overflow-hidden relative">
+        {/* Mascot with floating animation & Lottie Background */}
+        <div className="relative animate-fade-in-up w-full flex justify-center py-6 mt-10">
+          <div className="absolute inset-0 z-0 flex items-center justify-center opacity-60 pointer-events-none scale-[2.0]">
+            <DotLottieReact
+              src="https://lottie.host/9f506e7a-36fb-40cd-a931-15c46da7227d/xQjS581n20.lottie"
+              loop
+              autoplay
+            />
+          </div>
+          <DuckMascot size="2xl" animationStyle="wave" className="z-10 drop-shadow-xl" />
         </div>
 
         {/* Welcome text with staggered fade-in */}
