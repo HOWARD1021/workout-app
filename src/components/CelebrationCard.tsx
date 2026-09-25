@@ -2,7 +2,7 @@
 
 import React from "react";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
-import { Zap, Target, Timer } from "lucide-react";
+import { Zap, Dumbbell, Timer } from "lucide-react";
 import DuckDepositTank from "./DuckDepositTank";
 
 export function CelebrationCard() {
@@ -35,36 +35,37 @@ export function CelebrationCard() {
 
         {/* Stats Section */}
         <div className="flex w-full justify-between gap-3">
-          {/* XP Card */}
-          <div className="flex-1 rounded-2xl overflow-hidden border-2 border-[#FFC800]">
-            <div className="bg-[#FFC800] text-white text-xs font-bold py-1.5 uppercase tracking-wide">
-              Total XP
+          {/* Volume Card */}
+          <div className="flex-1 rounded-2xl overflow-hidden border-[3px] border-[#FFC800] flex flex-col">
+            <div className="bg-[#FFC800] text-white text-[11px] font-black py-1.5 uppercase tracking-widest leading-none flex items-center justify-center">
+              Total Volume
             </div>
-            <div className="bg-white py-3 flex items-center justify-center gap-1.5 text-[#FFC800] font-bold text-xl rounded-b-xl">
-              <Zap className="fill-current w-5 h-5" />
-              15
-            </div>
-          </div>
-
-          {/* Good Card */}
-          <div className="flex-1 rounded-2xl overflow-hidden border-2 border-[#58CC02]">
-            <div className="bg-[#58CC02] text-white text-xs font-bold py-1.5 uppercase tracking-wide">
-              Good
-            </div>
-            <div className="bg-white py-3 flex items-center justify-center gap-1.5 text-[#58CC02] font-bold text-xl rounded-b-xl">
-              <Target className="w-5 h-5 stroke-[2.5]" />
-              85%
+            <div className="bg-white py-3 flex items-baseline justify-center gap-1 flex-1">
+              <Zap className="fill-[#FFC800] text-[#FFC800] w-5 h-5 self-center translate-y-[-1px]" />
+              <span className="text-slate-800 font-black text-xl tracking-tight">4,250</span>
+              <span className="text-slate-500 font-bold text-xs ml-[1px]">kg</span>
             </div>
           </div>
 
-          {/* Speedy Card */}
-          <div className="flex-1 rounded-2xl overflow-hidden border-2 border-[#1CB0F6]">
-            <div className="bg-[#1CB0F6] text-white text-xs font-bold py-1.5 uppercase tracking-wide">
-              Speedy
+          {/* Sets Card */}
+          <div className="flex-1 rounded-2xl overflow-hidden border-[3px] border-[#58CC02] flex flex-col">
+            <div className="bg-[#58CC02] text-white text-[11px] font-black py-1.5 uppercase tracking-widest leading-none flex items-center justify-center">
+              Total Sets
             </div>
-            <div className="bg-white py-3 flex items-center justify-center gap-1.5 text-[#1CB0F6] font-bold text-xl rounded-b-xl">
-              <Timer className="w-5 h-5 stroke-[2.5]" />
-              2:37
+            <div className="bg-white py-3 flex items-center justify-center gap-1.5 flex-1">
+              <Dumbbell className="w-5 h-5 stroke-[2.5] text-[#58CC02]" />
+              <span className="text-slate-800 font-black text-xl tracking-tight">24</span>
+            </div>
+          </div>
+
+          {/* Duration Card */}
+          <div className="flex-1 rounded-2xl overflow-hidden border-[3px] border-[#1CB0F6] flex flex-col">
+            <div className="bg-[#1CB0F6] text-white text-[11px] font-black py-1.5 uppercase tracking-widest leading-none flex items-center justify-center">
+              Duration
+            </div>
+            <div className="bg-white py-3 flex items-baseline justify-center gap-1 flex-1">
+              <Timer className="w-5 h-5 stroke-[2.5] text-[#1CB0F6] self-center translate-y-[-1px]" />
+              <span className="text-slate-800 font-black text-xl tracking-tight">1<span className="text-sm font-bold text-slate-500 ml-[1px] mr-1">h</span>15<span className="text-sm font-bold text-slate-500 ml-[1px]">m</span></span>
             </div>
           </div>
         </div>
