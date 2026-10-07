@@ -1,12 +1,8 @@
 import { render, screen, act } from "@testing-library/react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import sharp from "sharp";
+import path from "node:path";
 import DuckDepositTank from "@/components/DuckDepositTank";
-
-vi.mock("@/components/DuckMascot", () => ({
-  default: ({ variant }: { variant?: string }) => (
-    <div data-testid="duck-mascot" data-variant={variant} />
-  ),
-}));
 
 vi.mock("@/lib/sfx", () => ({
   playRewardSfx: vi.fn(),
@@ -19,6 +15,7 @@ describe("DuckDepositTank component", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it("renders with target amount and labels", () => {
@@ -34,10 +31,10 @@ describe("DuckDepositTank component", () => {
     expect(screen.getByText("今日汗水存款")).toBeInTheDocument();
     expect(screen.getByText("3,500")).toBeInTheDocument();
     expect(screen.getByText("kg")).toBeInTheDocument();
-    expect(screen.getByTestId("duck-mascot")).toHaveAttribute("data-variant", "complete");
+    expect(screen.getByRole("img", { name: "Duck on a boat" })).toHaveAttribute("src", "/images/duck-boat-transparent.png");
   });
 
-  it("renders with PR variant when isPR is true", () => {
+  it("keeps the transparent boat artwork for PR celebrations", () => {
     render(
       <DuckDepositTank
         amount={5000}
@@ -47,7 +44,18 @@ describe("DuckDepositTank component", () => {
       />
     );
 
-    expect(screen.getByTestId("duck-mascot")).toHaveAttribute("data-variant", "pr");
+    expect(screen.getByRole("img", { name: "Duck on a boat" })).toHaveAttribute("src", "/images/duck-boat-transparent.png");
+  });
+
+  it("ships artwork with transparent corners instead of a white square", async () => {
+    render(<DuckDepositTank amount={1} autoStart={false} />);
+    const src = screen.getByRole("img", { name: "Duck on a boat" }).getAttribute("src")!;
+    const { data, info } = await sharp(path.join(process.cwd(), "public", src))
+      .ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    for (const pixel of [0, info.width - 1, (info.height - 1) * info.width, info.width * info.height - 1]) {
+      expect(data[pixel * info.channels + 3]).toBe(0);
+    }
+    expect(data.some((value, index) => index % info.channels === 3 && value === 255)).toBe(true);
   });
 
   it("counts up number smoothly when autoStart is enabled", () => {

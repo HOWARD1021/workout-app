@@ -13,9 +13,11 @@ vi.mock("@/lib/i18n", () => ({
   useI18n: () => ({ locale: "zh-TW" }),
 }));
 
-vi.mock("@/components/DuckMascot", () => ({
-  default: () => <div data-testid="duck-mascot" />,
+vi.mock("@lottiefiles/dotlottie-react", () => ({
+  DotLottieReact: () => <div data-testid="confetti-animation" />,
 }));
+
+vi.mock("@/lib/sfx", () => ({ playRewardSfx: vi.fn() }));
 
 vi.mock("canvas-confetti", () => ({
   default: vi.fn(),

@@ -4,7 +4,6 @@ import WorkoutComplete from "@/components/WorkoutComplete";
 import * as membershipLib from "@/lib/membership";
 import * as api from "@/lib/api";
 
-const duckMascotMock = vi.hoisted(() => vi.fn());
 
 // Mock dependencies
 vi.mock("next/navigation", () => ({
@@ -18,12 +17,11 @@ vi.mock("@/lib/i18n", () => ({
   useI18n: () => ({ locale: "zh-TW" }),
 }));
 
-vi.mock("@/components/DuckMascot", () => ({
-  default: (props: { variant?: string }) => {
-    duckMascotMock(props);
-    return <div data-testid="duck-mascot" data-variant={props.variant} />;
-  },
+vi.mock("@lottiefiles/dotlottie-react", () => ({
+  DotLottieReact: () => <div data-testid="confetti-animation" />,
 }));
+
+vi.mock("@/lib/sfx", () => ({ playRewardSfx: vi.fn() }));
 
 vi.mock("canvas-confetti", () => ({
   default: vi.fn(),
@@ -81,7 +79,6 @@ describe("WorkoutComplete cost efficiency card", () => {
         storage.clear();
       }),
     });
-    duckMascotMock.mockClear();
 
     // Default: achievements check returns empty
     vi.spyOn(api.achievementsApi, "check").mockResolvedValue({
@@ -90,16 +87,16 @@ describe("WorkoutComplete cost efficiency card", () => {
     vi.spyOn(api.analyticsApi, "monthlyRecap").mockResolvedValue(emptyMonthlyRecap);
   });
 
-  it("uses the normal completion mascot when no PR was broken", () => {
+  it("integrates the transparent boat into the actual completion screen", () => {
     render(<WorkoutComplete summary={baseSummary} />);
 
-    expect(screen.getByTestId("duck-mascot")).toHaveAttribute(
-      "data-variant",
-      "complete"
+    expect(screen.getByRole("img", { name: "Duck on a boat" })).toHaveAttribute(
+      "src", "/images/duck-boat-transparent.png"
     );
+    expect(screen.getByText("🌊 今日汗水存款")).toBeInTheDocument();
   });
 
-  it("uses the PR mascot only when the workout produced new PRs", () => {
+  it("shows the PR deposit label only when the workout produced new PRs", () => {
     render(
       <WorkoutComplete
         summary={{
@@ -111,10 +108,10 @@ describe("WorkoutComplete cost efficiency card", () => {
       />
     );
 
-    expect(screen.getByTestId("duck-mascot")).toHaveAttribute(
-      "data-variant",
-      "pr"
+    expect(screen.getByRole("img", { name: "Duck on a boat" })).toHaveAttribute(
+      "src", "/images/duck-boat-transparent.png"
     );
+    expect(screen.getByText("🏆 破紀錄汗水存款")).toBeInTheDocument();
     expect(screen.getByText("1 個新紀錄！")).toBeInTheDocument();
   });
 
